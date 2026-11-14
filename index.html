@@ -367,7 +367,8 @@ window.onYouTubeIframeAPIReady = () => { ytReady = true; };
   document.head.append(sc);
 })();
 function setVideo(ex){
-  const key = ex.video ? "yt:" + ex.video : "ph:" + ex.name;
+  let key = ex.video ? "yt:" + ex.video : "ph:" + ex.name;
+  if (ex.video && !ytReady) key += shouldPlay() ? ":play" : ":hold";
   if (key === currentVideoKey) return;
   currentVideoKey = key;
   try { ytPlayer && ytPlayer.destroy && ytPlayer.destroy(); } catch (e) {}
@@ -389,9 +390,11 @@ function setVideo(ex){
           try {
             e.target.mute();
             const f = e.target.getIframe(); f.title = `${ex.name} demo video`; f.tabIndex = -1;
-            if (paused) e.target.pauseVideo(); else e.target.playVideo();
+            if (shouldPlay()) e.target.playVideo(); else holdVideo();
           } catch (err) {}
         },
+        // Autoplay loads the first frame; stop it straight away if we're resting.
+        onStateChange: e => { if (player === ytPlayer && e.data === 1 && !shouldPlay()) holdVideo(); },
         onError: () => { if (player === ytPlayer) ytFailed = true; }
       }
     });
@@ -399,7 +402,7 @@ function setVideo(ex){
   } else if (ex.video){
     const f = document.createElement("iframe");
     const id = encodeURIComponent(ex.video);
-    f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3`;
+    f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=${shouldPlay() ? 1 : 0}&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3`;
     f.allow = "autoplay; encrypted-media; picture-in-picture";
     f.title = `${ex.name} demo video`;
     f.tabIndex = -1;
@@ -413,6 +416,8 @@ function setVideo(ex){
   }
   if (paused) showPausedBadge(true);
 }
+// Video only plays during work. During rest, countdowns and pauses it holds on the first frame.
+function shouldPlay(){ return !paused && steps[idx] && steps[idx].kind === "work"; }
 // True when the demo video is actually playing (or there's no controllable video).
 function videoPlaying(){
   if (!ytPlayer || ytFailed) return true;
@@ -422,6 +427,10 @@ function videoPlaying(){
 function restartVideo(){
   if (!ytPlayer || !ytPlayerReady || ytFailed) return;
   try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch (e) {}
+}
+function holdVideo(){
+  if (!ytPlayer || !ytPlayerReady) return;
+  try { ytPlayer.pauseVideo(); ytPlayer.seekTo(0, true); } catch (e) {}
 }
 function pauseVideo(on){
   if (!ytPlayer || !ytPlayerReady) return;
@@ -460,6 +469,7 @@ function enterStep(){
   $("player").classList.toggle("is-rest", s.kind !== "work");
   setVideo(s.kind === "work" ? s : s.next);
   if (s.kind === "work") restartVideo();   // video and rep count start together
+  else holdVideo();                        // no video playback during rest
   if (s.kind === "work"){
     beep(988, .28, .3);
     if (s.mode === "manual" || (s.mode === "reps" && !settings.autoCount)) say(`${s.name}. ${s.target}. Tap done when finished.`);
@@ -500,7 +510,7 @@ $("player").addEventListener("pointerdown", wake, true);
 function togglePause(){
   paused = !paused;
   wake();
-  pauseVideo(paused);
+  pauseVideo(!shouldPlay());
   $("pauseBtn").innerHTML = paused ? ICON_PLAY : ICON_PAUSE;
   $("pauseBtn").setAttribute("aria-label", paused ? "Resume" : "Pause");
   showPausedBadge(paused);
