@@ -222,7 +222,7 @@ const WORKOUT = {
   blocks: [
     { name: "Warm-up", type: "circuit", rounds: 1, restAfter: 15, items: [
       { name: "Bodyweight Squat", reps: 10, cue: "Weight in heels, drive knees out over ankles", video: "c685FvzmlA8" },
-      { name: "Reverse Lunge + Twist", reps: 5, perSide: true, cue: "Staple lead heel down, step back, brace and rotate", video: "sUaO0tWZF7I" },
+      { name: "Reverse Lunge + Twist", reps: 5, perSide: true, alternate: true, cue: "Staple lead heel down, step back, brace and rotate", video: "sUaO0tWZF7I" },
       { name: "Bushwackers", reps: 10, cue: "Stretch hands as high/low as possible, swing arms, loose shoulders", video: "2VoIdjS-BwI" },
       { name: "Backslaps", reps: 10, cue: "Alternate hand on top, squeeze shoulder blades on stretch back, roll shoulder blades on stretch forward", video: "Eqll-LkFlgQ" },
       { name: "Forearm Stretch", time: 30, note: "15 sec / arm", cue: "Extend arm, point hand up and pull fingers back, point hand down and pull fingers back, flip hand over and pull fingers back", video: "Xf7ZNZJLtWE" }
@@ -269,7 +269,7 @@ function mkWork(it, meta){
   let mode = it.time ? "time" : it.manual ? "manual" : "reps";
   let target = mode === "time" ? `${it.time} sec${it.note ? ", " + it.note : ""}`
              : mode === "manual" ? it.label
-             : `${fmtRange(it.reps)} reps${it.perSide ? " / side" : ""}`;
+             : `${fmtRange(it.reps)} reps${it.perSide ? " / side" : ""}${it.alternate ? ", alternating" : ""}`;
   return { kind: "work", ...it, mode, repMin, repMax, target, ...meta };
 }
 function buildSteps(){
@@ -530,7 +530,7 @@ function beginSet(){
   restartVideo();   // video and rep count start together
   if (s.mode === "manual" || (s.mode === "reps" && !settings.autoCount)) say(`Go. ${s.target}. Tap done when finished.`);
   else if (s.mode === "time") say(`Go. ${s.time} seconds.`);
-  else say(`Go${s.perSide ? ". Left side first" : ""}.`);
+  else say(`Go${s.alternate ? ". Alternate sides, left first" : s.perSide ? ". Left side first" : ""}.`);
   updateCover();
   render();
 }
@@ -599,7 +599,7 @@ function tick(){
     if (rep !== lastRep){
       if (lastRep) beep(520, .06, .15);
       lastRep = rep;
-      if (s.perSide && rep === s.repMax + 1 && !sideAnnounced){ sideAnnounced = true; say("Switch sides"); }
+      if (s.perSide && !s.alternate && rep === s.repMax + 1 && !sideAnnounced){ sideAnnounced = true; say("Switch sides"); }
     }
   }
   render();
@@ -624,10 +624,12 @@ function render(){
     } else if (s.mode === "reps" && settings.autoCount){
       const total = s.repMax * (s.perSide ? 2 : 1);
       const rep = Math.min(Math.floor(t / repSec(s)) + 1, total);
-      const shown = s.perSide ? ((rep - 1) % s.repMax) + 1 : rep;
+      // Alternating moves switch sides every rep; others do all of one side, then the other.
+      const shown = s.alternate ? Math.ceil(rep / 2) : s.perSide ? ((rep - 1) % s.repMax) + 1 : rep;
       big.textContent = shown;
       if (shown >= s.repMin) big.classList.add("in-range");
-      const sideTxt = s.perSide ? (rep <= s.repMax ? "Left side" : "Right side") : (s.repMin !== s.repMax ? (shown >= s.repMin ? "Keep going or tap done" : `Aim for ${s.repMin}–${s.repMax}`) : "reps");
+      const sideTxt = s.alternate ? (rep % 2 ? "Left side" : "Right side")
+        : s.perSide ? (rep <= s.repMax ? "Left side" : "Right side") : (s.repMin !== s.repMax ? (shown >= s.repMin ? "Keep going or tap done" : `Aim for ${s.repMin}–${s.repMax}`) : "reps");
       side.innerHTML = `<b>of ${s.repMax}</b><span>${sideTxt}</span>`;
     } else {
       big.textContent = s.mode === "manual" ? "Go" : fmtRange(s.reps);
