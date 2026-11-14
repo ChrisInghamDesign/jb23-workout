@@ -672,7 +672,6 @@ function finish(){
 }
 
 function endWorkout(){
-  if (!confirm("End this workout?")) return;
   clearInterval(timer);
   try { speechSynthesis.cancel(); } catch (e) {}
   try { wakeLock && wakeLock.release(); } catch (e) {}
