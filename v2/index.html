@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Workouts – JB23 Fit</title>
+<meta name="theme-color" content="#FFC629">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JB23 Fit">
+<link rel="apple-touch-icon" href="../icon-180.png">
+<link rel="icon" href="../icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#ECEEF1; --surface:#FFFFFF; --ink:#15171A; --muted:#5A6068; --line:#D3D8DE;
+  --gold:#FFC629; --on-gold:#15171A;
+  --cond:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{ color-scheme: dark; --bg:#15171A; --surface:#202328; --ink:#F3F4F6; --muted:#A2A8B0; --line:#33373D; }
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+[hidden]{display:none!important}
+
+/* ---------- App screens (Workouts tab) ---------- */
+.app{min-height:100%;background:#F6F6F7;color:#1C1D1F;font-family:"Mulish",var(--body)}
+.view{min-height:100vh;max-width:720px;margin:0 auto;background:#F6F6F7}
+.appbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:#F6F6F7}
+.appbar h1{font-size:1.35rem;font-weight:800;margin:0;flex:1;text-align:center}
+.icon-btn{width:44px;height:44px;border:0;background:none;display:grid;place-items:center;color:#1C1D1F;border-radius:50%}
+.icon-btn svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--gold);color:#15171A;display:grid;place-items:center;font-weight:800;font-size:.95rem}
+.sheet-card{background:#fff;border-radius:22px 22px 0 0;min-height:calc(100vh - 70px);padding:24px 20px calc(env(safe-area-inset-bottom,0px) + 110px)}
+.version{font-family:"Mulish",var(--body);font-weight:700;font-size:.72rem;color:#7B7F86;border:1px solid #DEDFE2;border-radius:999px;padding:2px 8px}
+/* list */
+.prog-name{font-size:1.6rem;font-weight:800;margin:0 0 10px}
+.tag{display:inline-block;background:#EFEFF1;border-radius:6px;padding:3px 9px;font-size:.95rem;margin-bottom:14px}
+.prog-title{font-size:1.2rem;font-weight:800;margin:0 0 6px}
+.prog-dates{margin:0 0 14px;color:#2C2E31}
+.phase{color:#3A3C40;line-height:1.5;margin:0 0 6px;white-space:pre-line}
+.more{color:#2E7CF6;background:none;border:0;padding:0;font:inherit;font-weight:600;cursor:pointer}
+.wcard{display:flex;align-items:stretch;width:100%;text-align:left;background:#fff;border:1.5px solid #E6E7EA;border-radius:16px;overflow:hidden;padding:0;margin-top:14px;cursor:pointer;font:inherit;color:inherit}
+.wcard .thumb{width:32%;max-width:170px;aspect-ratio:4/3;flex:none}
+.wcard .meta{padding:14px 16px;display:flex;flex-direction:column;justify-content:center;gap:10px;min-width:0}
+.wcard .meta b{font-weight:500;font-size:1.25rem;line-height:1.25}
+.wcard .meta span{font-size:.98rem;color:#2C2E31}
+.wcard .meta .donetag{color:#1E9E5A;font-weight:700}
+.thumb{background:#222 center/cover no-repeat;position:relative}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+/* workout detail */
+.wtitle{display:flex;gap:14px;align-items:flex-start;margin-bottom:18px}
+.check{width:34px;height:34px;flex:none;border-radius:50%;border:2.5px solid #2E7CF6;background:none;margin-top:4px;display:grid;place-items:center;padding:0;cursor:pointer}
+.check svg{width:20px;height:20px;stroke:#fff;stroke-width:3;fill:none;display:none}
+.check.on{background:#1E9E5A;border-color:#1E9E5A}.check.on svg{display:block}
+.wtitle h2{font-size:1.7rem;font-weight:800;line-height:1.15;margin:0}
+.facts2{list-style:none;padding:0;margin:0 0 22px;display:grid;gap:10px}
+.facts2 li{display:flex;align-items:center;gap:14px;font-size:1.1rem}
+.facts2 svg{width:26px;height:26px;fill:none;stroke:#1C1D1F;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h3{font-size:1.1rem;font-weight:800;margin:0 0 12px}
+.equip{display:flex;gap:14px;margin-bottom:22px;padding-bottom:22px;border-bottom:1.5px solid #ECEDEF}
+.equip div{width:86px;text-align:center;font-size:.95rem}
+.equip i{display:grid;place-items:center;width:86px;height:86px;border-radius:20px;background:#F2F2F4;margin-bottom:8px}
+.equip svg{width:40px;height:40px;fill:none;stroke:#1C1D1F;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.instr h3{font-size:1.5rem;font-weight:800;margin:0 0 10px}
+.instr p{font-size:1.08rem;line-height:1.5;color:#2C2E31;margin:0 0 4px;white-space:pre-line}
+.block{margin:22px -20px 0;border-left:5px solid #2E7CF6}
+.block.sets{border-left-color:transparent}
+.block-head{background:#F4F4F6;padding:14px 20px 14px 15px;font-weight:800;font-size:1.1rem}
+.erow{display:flex;gap:16px;align-items:center;width:100%;padding:12px 20px 12px 15px;background:none;border:0;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.erow .thumb{width:84px;height:84px;border-radius:14px;overflow:hidden;flex:none}
+.erow b{display:block;font-size:1.15rem;font-weight:700;color:#2A2B2E}
+.erow span{display:block;color:#7B7F86;font-size:1rem;margin-top:3px}
+.erow em{display:block;font-style:normal;color:#7B7F86;font-size:.92rem;margin-top:3px}
+.erow em::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:7px;vertical-align:1px}
+.rest-row{display:flex;gap:16px;align-items:center;padding:10px 20px 14px 15px;color:#2A2B2E;font-weight:600}
+.rest-row i{width:84px;height:44px;border-radius:12px;background:#FFF4CC;display:grid;place-items:center;flex:none}
+.rest-row svg{width:24px;height:24px;fill:none;stroke:#B98900;stroke-width:2;stroke-linecap:round}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 22px);z-index:6;background:var(--gold);color:#15171A;border:0;border-radius:999px;padding:16px 46px;font:inherit;font-family:"Mulish",var(--body);font-weight:800;font-size:1.3rem;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+/* exercise detail */
+.ex-video{position:relative;aspect-ratio:16/9;background:#111;border-radius:22px 22px 0 0;overflow:hidden}
+.ex-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.ex-body{background:#fff;min-height:calc(100vh - 70px - 56vw)}
+.ex-body .in{padding:18px 20px}
+.ex-body h2{font-size:1.7rem;font-weight:800;margin:0 0 8px}
+.ex-body p{font-size:1.1rem;line-height:1.5;margin:0;color:#2C2E31}
+.ex-sets{background:#F6F6F7;padding:16px 20px}
+.ex-sets small{display:block;font-size:.95rem;color:#2C2E31}
+.ex-sets b{font-size:1.15rem}
+/* settings sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.ssheet{background:#fff;width:100%;max-width:720px;border-radius:22px 22px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 26px);display:grid;gap:16px}
+.ssheet h2{margin:0;font-size:1.3rem;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.row{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:1.05rem}
+.switch{appearance:none;width:52px;height:30px;border-radius:30px;background:#DADCE0;position:relative;margin:0;cursor:pointer;flex:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s}
+.switch:checked{background:var(--gold)}
+.switch:checked::after{transform:translateX(22px)}
+.brand{font-family:var(--cond);font-weight:800;font-size:1.25rem;display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.brand i{width:30px;height:30px;border-radius:8px;background:var(--gold);display:inline-block}
+.start{background:var(--gold);color:var(--on-gold);border:0;border-radius:16px;padding:20px 36px;font-family:var(--cond);font-weight:800;font-size:1.7rem;min-width:260px}
+/* ---------- Player (built for a 16:9 TV) ---------- */
+.player{position:fixed;inset:0;display:flex;background:#0B0C0E;color:#F3F4F6;
+  --pbg:#15171A;--pink:#F3F4F6;--pmuted:#9EA4AC;--pline:#2E3238;
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.player.is-rest{--pbg:var(--gold);--pink:#15171A;--pmuted:rgba(21,23,26,.66);--pline:rgba(21,23,26,.22)}
+.stage-wrap{height:100%;aspect-ratio:9/16;flex:none;position:relative;background:#000}
+.player.zoom .stage-wrap{aspect-ratio:3/4}
+.stage{position:absolute;inset:0;overflow:hidden}
+.stage-wrap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:30%;background:linear-gradient(transparent,rgba(0,0,0,.65));pointer-events:none;transition:opacity .35s}
+.player.idle .stage-wrap::after{opacity:0}
+.stage iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0;pointer-events:none}
+.player.zoom .stage iframe{height:auto;aspect-ratio:9/16;top:50%;transform:translateY(-50%) scale(1.04)}
+/* Cover that hides YouTube's own overlays (title, logo, play button) while loading, resting or paused */
+.cover{position:absolute;inset:0;z-index:1;background:#000;overflow:hidden;display:none}
+.cover.on{display:block}
+.cover img{position:absolute;top:0;left:50%;height:100%;width:auto;transform:translateX(-50%)}
+.player.zoom .cover img{transform:translateX(-50%) scale(1.334)}
+.cover span:empty{display:none}
+.cover span{position:absolute;top:max(14px,3vh);left:max(14px,3vh);background:rgba(0,0,0,.6);color:#fff;font-weight:700;font-size:max(13px,2.2vh);padding:.4em .9em;border-radius:999px}
+.placeholder{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:8%;color:#F3F4F6;background:linear-gradient(160deg,#2A2E34,#15171A)}
+.placeholder b{font-family:var(--cond);font-weight:700;font-size:4vh;line-height:1}
+.placeholder span{color:#A2A8B0;margin-top:1vh;font-size:2vh}
+.paused-badge{position:absolute;left:0;right:0;top:0;padding:2vh;text-align:center;font-weight:700;font-size:3vh;background:rgba(0,0,0,.7);color:#fff}
+
+.panel{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;background:var(--pbg);color:var(--pink);
+  padding:calc(env(safe-area-inset-top,0px) + 4.5vh) 4vw calc(env(safe-area-inset-bottom,0px) + 4vh) 3.5vw;transition:background .3s}
+.topline{display:flex;justify-content:space-between;align-items:baseline;gap:2vw;font-size:2.6vh;font-weight:600;color:var(--pmuted)}
+.left-time{font-family:var(--cond);font-weight:700;font-size:3.2vh;font-variant-numeric:tabular-nums}
+.name{font-family:var(--cond);font-weight:700;font-size:clamp(2rem,9.5vh,7rem);line-height:.95;margin:2.5vh 0 0;letter-spacing:-.005em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:1.2vh;margin-top:2.4vh}
+.chip{font-weight:700;font-size:3.4vh;padding:.25em .75em;border-radius:999px;border:.35vh solid var(--pline)}
+.chip.solid{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.is-rest .chip.solid{background:#15171A;color:var(--gold);border-color:#15171A}
+.count{display:flex;align-items:flex-end;gap:2vw;margin-top:auto}
+.big{font-family:var(--cond);font-weight:800;font-size:28vh;line-height:.78;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.big.in-range{color:var(--gold)}
+.is-rest .big{font-size:38vh}
+.count-side{display:flex;flex-direction:column;padding-bottom:1vh;font-size:3.4vh}
+.count-side b{font-family:var(--cond);font-weight:700;font-size:1.35em}
+.count-side span{color:var(--pmuted);font-weight:600}
+.bar{height:1.3vh;border-radius:99px;background:var(--pline);overflow:hidden;margin-top:3vh}
+.bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:99px}
+.is-rest .bar i{background:#15171A}
+.cue{font-size:3.2vh;line-height:1.35;margin:3vh 0 0;max-width:44ch}
+.cue:empty{display:none}
+.cue small{display:block;color:var(--pmuted);font-size:.72em;font-weight:700;margin-bottom:.6vh}
+.segs{display:flex;gap:.25vw;margin-top:3.5vh}
+.segs i{flex:1;min-width:0;height:.7vh;border-radius:1vh;background:var(--pline)}
+.segs i.past{background:var(--pmuted)}
+.segs i.now{background:var(--pink)}
+.controls{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 4%);transform:translateX(-50%);display:flex;align-items:center;gap:max(10px,1.6vh);z-index:2;white-space:nowrap;transition:opacity .35s}
+.player.idle .controls{opacity:0;pointer-events:none}
+.ctl{width:max(48px,8.5vh);height:max(48px,8.5vh);border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;display:grid;place-items:center;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);touch-action:manipulation}
+.ctl svg{width:44%;height:44%;fill:currentColor}
+.ctl.primary{width:auto;border-radius:999px;padding:0 max(20px,3vh);background:var(--gold);color:var(--on-gold);font-weight:800;font-size:max(16px,2.8vh)}
+.is-rest .ctl.primary{background:#fff;color:#15171A}
+.end-btn svg{width:1.05em;height:1.05em;fill:currentColor;margin-right:.4em;vertical-align:-.15em}
+.end-btn{display:inline-flex;align-items:center;background:none;border:.25vh solid var(--pline);color:var(--pink);border-radius:1.2vh;padding:.3em .9em;font-weight:700;font-size:max(13px,2.2vh);margin-left:1.5vw;transition:opacity .35s;touch-action:manipulation}
+.player.idle .end-btn{opacity:0;pointer-events:none}
+
+/* Phone held upright (not casting) */
+@media (max-aspect-ratio: 4/5){
+  .player{flex-direction:column}
+  .stage-wrap,.player.zoom .stage-wrap{height:46%;aspect-ratio:auto;width:100%}
+  .stage iframe,.player.zoom .stage iframe{height:100%;width:auto;aspect-ratio:9/16;left:50%;top:0;transform:translateX(-50%)}
+  .panel{padding:2.5vh 5vw}
+  .name{font-size:5vh}.big{font-size:14vh}.is-rest .big{font-size:18vh}.chip{font-size:2.2vh}.count-side{font-size:2.2vh}
+}
+@media (max-width: 820px){
+  .home{grid-template-columns:1fr}
+}
+
+/* ---------- Finished ---------- */
+.done{min-height:100%;display:flex;flex-direction:column;justify-content:center;padding:40px clamp(20px,6vw,80px);max-width:900px;margin:0 auto}
+.done h1{font-family:var(--cond);font-weight:800;font-size:clamp(3rem,10vw,7rem);line-height:.9;margin:0 0 18px}
+.done p{font-size:1.3rem;color:var(--muted);margin:0 0 28px}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+
+<div class="app" id="home">
+  <!-- Workouts list -->
+  <section class="view" id="v-list">
+    <div class="appbar"><span class="avatar" aria-hidden="true">CI</span><h1>Workouts</h1><span class="version"></span></div>
+    <div class="sheet-card">
+      <h2 class="prog-name" id="l-owner"></h2>
+      <span class="tag" id="l-tag"></span>
+      <h3 class="prog-title" id="l-prog"></h3>
+      <p class="prog-dates" id="l-dates"></p>
+      <p class="phase" id="l-phase"></p>
+      <div id="l-cards"></div>
+    </div>
+  </section>
+  <!-- Workout detail -->
+  <section class="view" id="v-workout" hidden>
+    <div class="appbar">
+      <button class="icon-btn" id="w-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <button class="icon-btn" id="w-settings" aria-label="Player settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    </div>
+    <div class="sheet-card" id="w-body"></div>
+    <button class="fab" id="startBtn">Start Now</button>
+  </section>
+  <!-- Exercise detail -->
+  <section class="view" id="v-exercise" hidden>
+    <div class="appbar"><button class="icon-btn" id="e-back" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span></span></div>
+    <div class="ex-video" id="e-video"></div>
+    <div class="ex-body">
+      <div class="in"><h2 id="e-name"></h2><p id="e-cue"></p></div>
+      <div class="ex-sets"><small>In this workout</small><b id="e-sets"></b></div>
+    </div>
+  </section>
+  <!-- Player settings -->
+  <div class="scrim" id="settings" hidden>
+    <div class="ssheet" role="dialog" aria-label="Player settings">
+      <h2>Player settings <button class="icon-btn" id="s-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
+      <div class="row"><label for="autoCount">Count reps for me</label><input type="checkbox" class="switch" id="autoCount"></div>
+      <div class="row"><label for="zoom">Zoom video to fill more of the TV</label><input type="checkbox" class="switch" id="zoom"></div>
+      <div class="row"><label for="voice">Voice cues</label><input type="checkbox" class="switch" id="voice"></div>
+      <div class="row"><label for="beeps">Beeps</label><input type="checkbox" class="switch" id="beeps"></div>
+    </div>
+  </div>
+</div>
+
+<div class="player" id="player" hidden>
+  <div class="stage-wrap">
+    <div class="stage" id="stage"></div>
+    <div class="cover" id="cover"><img id="cover-img" alt=""><span id="cover-label"></span></div>
+    <div class="controls" id="controls">
+      <button class="ctl" id="backBtn" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.5v14H6zM10 12l9-7v14z"/></svg></button>
+      <button class="ctl" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg></button>
+      <button class="ctl primary" id="nextBtn">Done</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="topline"><span id="p-pos"></span><span><span class="left-time" id="p-left"></span><button class="end-btn" id="endBtn" aria-label="End workout and go to the home screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg>Home</button></span></div>
+    <h2 class="name" id="p-name"></h2>
+    <div class="chips" id="p-chips"></div>
+    <div class="count"><div class="big" id="p-big"></div><div class="count-side" id="p-side"></div></div>
+    <div class="bar"><i id="p-bar"></i></div>
+    <p class="cue" id="p-cue"></p>
+    <div class="segs" id="segs" aria-hidden="true"></div>
+  </div>
+</div>
+
+<main class="done" id="done" hidden>
+  <div class="brand"><i aria-hidden="true"></i>JB23 Fit<span class="version"></span></div>
+  <h1>Workout complete</h1>
+  <p id="d-text"></p>
+  <div><button class="start" id="againBtn">Back to workout</button></div>
+</main>
+
+<script>
+/* ============================================================
+   WORKOUT DATA — pulled from Trainerize ("Dumbbell Shred").
+   To add a demo video, paste the YouTube video ID into `video`
+   (the part after "v=" in the YouTube link).
+   ============================================================ */
+const PROGRAM = {
+  owner: "Chris's program",
+  tag: "Main",
+  name: "Dumbbell Shred",
+  dates: "5 Nov 2026 - 16 Dec 2026",
+  phase: "Weeks 1-2: Foundation & Control\n\nThese first two weeks are about setting the standard for how you move, breathe, and control the weight. You’ll train around the 80% effort zone, focusing on clean reps, steady breathing, and strong positions. The goal isn’t to chase fatigue — it’s to build trust in your joints, posture, and technique while waking up muscle and nervous system coordination.\n\nThink: smooth reps, controlled negatives, and learning how to create tension without fight. This phase sets the base that lets everything ramp up safely and effectively later."
+};
+const WORKOUT = {
+  id: "w1d1",
+  type: "Regular",
+  estMinutes: 50,
+  equipment: ["Body Weight", "Dumbbell"],
+  instructions: "Focus: Posture, pulling strength, and upper-body control\n\nWorkout: This session is about building strong, stable pulling patterns and clean arm strength while keeping your posture locked in. Drive the elbows with intent, control the negative on every rep, and stay tall through your core. You should feel your back and arms doing the work — not momentum or joint strain. Calm, powerful reps stack better strength over time.",
+  program: "Dumbbell Shred",
+  day: "Week 1, Day 1",
+  title: "Back, Shoulders, Biceps",
+  focus: "Posture, pulling strength, and upper-body control",
+  intro: "Build strong, stable pulling patterns and clean arm strength while keeping your posture locked in. Drive the elbows with intent, control the negative on every rep, and stay tall through your core.",
+  blocks: [
+    { name: "Warm-up", type: "circuit", rounds: 1, restAfter: 15, items: [
+      { name: "Bodyweight Squat", reps: 10, cue: "Weight in heels, drive knees out over ankles", video: "c685FvzmlA8" },
+      { name: "Reverse Lunge + Twist", reps: 5, perSide: true, alternate: true, cue: "Staple lead heel down, step back, brace and rotate", video: "sUaO0tWZF7I" },
+      { name: "Bushwackers", reps: 10, cue: "Stretch hands as high/low as possible, swing arms, loose shoulders", video: "2VoIdjS-BwI" },
+      { name: "Backslaps", reps: 10, cue: "Alternate hand on top, squeeze shoulder blades on stretch back, roll shoulder blades on stretch forward", video: "Eqll-LkFlgQ" },
+      { name: "Forearm Stretch", time: 30, note: "15 sec / arm", cue: "Extend arm, point hand up and pull fingers back, point hand down and pull fingers back, flip hand over and pull fingers back", video: "Xf7ZNZJLtWE" }
+    ]},
+    { name: "Main work", type: "sets", rest: 45, items: [
+      { name: "Back Squeeze", sets: 2, reps: [12,15], cue: "Shoulders away from ears, drive shoulder blades together and squeeze back", video: "4EDw-JaLds8" },
+      { name: "Supinated Row", sets: 3, reps: [12,15], cue: "Push dumbbells away and counterbalance hips, drive elbows behind spine and squeeze back", video: "bKLftkWptjE" },
+      { name: "Gorilla Row", sets: 3, reps: [12,15], cue: "Brace and hold spine angle, create as much space between dumbbells on each row, stay smooth and rotate mid spine", video: "pTCEWUAqRrw" },
+      { name: "Bent Over Row", sets: 3, reps: [12,15], cue: "Brace core and hold spine angle, exhale and drive dumbbells straight up, inhale and resist to bottom", video: "aT4-gV77EQQ" },
+      { name: "Side Kneeling Back Extension", sets: 2, reps: [10,12], perSide: true, cue: "Keep shoulders away from ears and shoulder blades tight, drive knee/foot down through floor on raise", video: "OFHOP_uPE7Y" },
+      { name: "Shrug 2x", sets: 2, reps: [12,15], cue: "Let dumbbells pull traps down, exhale and full squeezes at top", video: "Si7NKkqUZCo" },
+      { name: "Upright Row + Front Raise", sets: 2, reps: [10,12], cue: "Drive elbows outside shoulders in row, shoulders away from ears in front raise", video: "p5JYSFYcepM" },
+      { name: "Rear Delt Fly + Skier Row", sets: 2, reps: [10,12], cue: "Push dumbbells out and away, pause then straight line push back in row", video: "8YkLXFppj8I" },
+      { name: "Curl", sets: 3, reps: [12,15], cue: "Shoulders away from ears, drive dumbbells to shoulder and squeeze, return arms to full length", video: "BCnFnzyW3wM" },
+      { name: "Hammer Curl + Shoulder 90", sets: 2, reps: [10,12], cue: "Big squeeze in curl contraction, keep biceps tight in transition, shoulders away from ears in shoulder 90", video: "laQ3WCNzb1o" }
+    ]},
+    { name: "Cool-down", type: "circuit", rounds: 1, items: [
+      { name: "Thoracic Turns", reps: 5, perSide: true, cue: "Inhale and tuck elbow, exhale and extend elbow to sky, eyes follow elbow", video: "HrumFTqqAE0" },
+      { name: "Cat Cow", reps: 10, cue: "Inhale and push belly button to ground and crown to sky, exhale and press ground away, extend mid spine to sky", video: "ugY4PMqKOvY" },
+      { name: "Forward Stretch", time: 15, cue: "Big inhale and exhale, extend forward, hold ankles/leg, keep face relaxed, slowly articulate back up", video: "ilaJMLx4SQs" },
+      { name: "Triple Push Out", manual: true, label: "1 rep, 3 pushes", cue: "Interlock fingers, inhale/exhale into push, hold position, inhale/exhale into second push, hold position, inhale/exhale into third and final push", video: "v9UtneQo5Nw" }
+    ]}
+  ]
+};
+const APP_VERSION = "2.0";   // bump on every update so you can tell which version is loaded
+const READY_SECONDS = 10;      // short "get ready" gap between moves in a circuit
+const START_SECONDS = 10;
+const LEAD_SECONDS = 3;       // "get set" pause on each exercise screen before the set begins     // countdown after tapping Start workout
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg>';
+const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>';
+//      // short "get ready" gap between moves in a circuit
+const MANUAL_ESTIMATE = 40;   // seconds assumed for tap-to-finish moves when estimating time
+
+/* ---------------- Settings ---------------- */
+const settings = { autoCount: true, voice: true, beeps: true, zoom: true };
+try { Object.assign(settings, JSON.parse(localStorage.getItem("jb23-settings") || "{}")); } catch (e) {}
+function saveSettings(){ try { localStorage.setItem("jb23-settings", JSON.stringify(settings)); } catch (e) {} }
+
+/* ---------------- Build the step list ---------------- */
+const $ = id => document.getElementById(id);
+const fmtRange = r => Array.isArray(r) ? `${r[0]}–${r[1]}` : `${r}`;
+function mkWork(it, meta){
+  const repMin = Array.isArray(it.reps) ? it.reps[0] : it.reps;
+  const repMax = Array.isArray(it.reps) ? it.reps[1] : it.reps;
+  let mode = it.time ? "time" : it.manual ? "manual" : "reps";
+  let target = mode === "time" ? `${it.time} sec${it.note ? ", " + it.note : ""}`
+             : mode === "manual" ? it.label
+             : `${fmtRange(it.reps)} reps${it.perSide ? " / side" : ""}${it.alternate ? ", alternating" : ""}`;
+  return { kind: "work", ...it, mode, repMin, repMax, target, ...meta };
+}
+function buildSteps(){
+  const work = [];
+  WORKOUT.blocks.forEach(b => {
+    if (b.type === "circuit"){
+      for (let r = 1; r <= b.rounds; r++) b.items.forEach((it, i) => {
+        const last = r === b.rounds && i === b.items.length - 1;
+        work.push(mkWork(it, { section: b.name,
+          position: `${b.name}, move ${i+1} of ${b.items.length}${b.rounds > 1 ? `, round ${r} of ${b.rounds}` : ""}`,
+          setLabel: null, after: last ? (b.restAfter || 0) : "ready" }));
+      });
+    } else {
+      b.items.forEach((it, i) => {
+        for (let s = 1; s <= it.sets; s++){
+          work.push(mkWork(it, { section: b.name,
+            position: `${b.name}, exercise ${i+1} of ${b.items.length}`,
+            setLabel: `Set ${s} of ${it.sets}`, after: b.rest }));
+        }
+      });
+    }
+  });
+  const steps = [];
+  work.forEach((w, i) => {
+    steps.push(w);
+    const next = work[i+1];
+    if (!next) return;
+    if (typeof w.after === "number" && w.after > 0) steps.push({ kind: "rest", dur: w.after, next });
+    else steps.push({ kind: "ready", dur: READY_SECONDS, next });
+  });
+  if (work.length) steps.unshift({ kind: "ready", dur: START_SECONDS, next: work[0], start: true });
+  return steps;
+}
+let steps = buildSteps();
+
+// Seconds per rep. Set `repSec` on an exercise to match its video exactly.
+const DEFAULT_REP_SEC = 2;   // matches the pace of the demo videos
+function repSec(s){ return s.repSec || DEFAULT_REP_SEC; }
+function stepDur(s){
+  if (s.kind !== "work") return s.dur;
+  if (s.mode === "time") return s.time;
+  if (s.mode === "reps" && settings.autoCount) return s.repMax * (s.perSide ? 2 : 1) * repSec(s);
+  return Infinity;
+}
+const estDur = s => { const d = stepDur(s); return isFinite(d) ? d : MANUAL_ESTIMATE; };
+const fmtClock = sec => { sec = Math.max(0, Math.round(sec)); return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")}`; };
+
+/* ---------------- Overview ---------------- */
+/* ---------------- Workouts tab screens ---------------- */
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const thumbHTML = id => id ? `<div class="thumb"><img src="https://i.ytimg.com/vi/${encodeURIComponent(id)}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()"></div>` : `<div class="thumb"></div>`;
+const isDone = () => { try { return localStorage.getItem("jb23-done-" + WORKOUT.id) === "1"; } catch (e) { return false; } };
+const setDone = v => { try { localStorage.setItem("jb23-done-" + WORKOUT.id, v ? "1" : "0"); } catch (e) {} };
+// Every exercise in display order, with its Trainerize-style sets line
+const EXERCISES = [];
+WORKOUT.blocks.forEach(b => b.items.forEach(it => {
+  const n = b.type === "circuit" ? b.rounds : it.sets;
+  const w = mkWork(it, {});
+  let what = w.mode === "reps" ? `${fmtRange(it.reps)} reps${it.perSide ? " / side" : ""}, mid tempo` : w.target;
+  EXERCISES.push({ ...it, block: b, line: `${n} set${n > 1 ? "s" : ""} x ${what}` });
+}));
+function moreText(el, full, limit){
+  if (full.length <= limit){ el.textContent = full; return; }
+  const cut = full.slice(0, limit).replace(/\s+\S*$/, "");
+  el.textContent = cut + "…";
+  const btn = document.createElement("button"); btn.className = "more"; btn.textContent = "See more";
+  btn.onclick = () => { el.textContent = full; };
+  el.append(btn);
+}
+function renderList(){
+  $("l-owner").textContent = PROGRAM.owner;
+  $("l-tag").textContent = PROGRAM.tag;
+  $("l-prog").textContent = PROGRAM.name;
+  $("l-dates").textContent = PROGRAM.dates;
+  moreText($("l-phase"), PROGRAM.phase, 230);
+  $("l-cards").innerHTML = `<button class="wcard" id="card-${WORKOUT.id}">${thumbHTML(WORKOUT.blocks[0].items[0].video)}
+    <div class="meta"><b>${esc(WORKOUT.day.replace(",", ""))}: ${esc(WORKOUT.title)}</b><span>est. ${WORKOUT.estMinutes} minutes&nbsp;&nbsp;${EXERCISES.length} Exercises</span>${isDone() ? `<span class="donetag">Completed</span>` : ""}</div></button>`;
+  $("card-" + WORKOUT.id).onclick = () => go("#w");
+}
+const EQUIP_ICONS = {
+  "Body Weight": '<circle cx="9" cy="5" r="2"/><path d="M4 20h16M7 16l4-6 5 3M11 10l-2 4 6 2"/>',
+  "Dumbbell": '<path d="M6 7v10M3 9v6M18 7v10M21 9v6M6 12h12"/>'
+};
+function renderWorkout(){
+  const block = b => {
+    const rows = b.items.map(it => {
+      const i = EXERCISES.findIndex(e => e.name === it.name && e.block === b);
+      const e = EXERCISES[i];
+      return `<button class="erow" data-ex="${i}">${thumbHTML(it.video)}<div><b>${esc(it.name)}</b><span>${esc(e.line)}</span>${b.type === "sets" ? `<em>Rest ${b.rest} sec between sets</em>` : ""}</div></button>`;
+    }).join("");
+    const head = b.type === "circuit" ? `<div class="block-head">Circuit of ${b.rounds} round${b.rounds > 1 ? "s" : ""}</div>` : "";
+    const rest = b.type === "circuit" && b.restAfter ? `<div class="rest-row"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></i>Rest for ${b.restAfter} sec</div>` : "";
+    return `<div class="block ${b.type}">${head}${rows}${rest}</div>`;
+  };
+  $("w-body").innerHTML = `
+    <div class="wtitle"><button class="check ${isDone() ? "on" : ""}" id="w-check" aria-label="Mark workout complete"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></button>
+      <h2>${esc(WORKOUT.day.replace(",", ""))}: ${esc(WORKOUT.title)}</h2></div>
+    <ul class="facts2">
+      <li><svg viewBox="0 0 24 24"><path d="M6 4v16M3 17l3 3 3-3M12 6h9M12 11h6M12 16h3"/></svg>${esc(WORKOUT.type)}</li>
+      <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>est. ${WORKOUT.estMinutes} minutes</li>
+      <li><svg viewBox="0 0 24 24"><path d="M6 7v10M3 9v6M18 7v10M21 9v6M6 12h12"/></svg>${EXERCISES.length} Exercises</li>
+    </ul>
+    <h3 class="h3">Equipment:</h3>
+    <div class="equip">${WORKOUT.equipment.map(q => `<div><i><svg viewBox="0 0 24 24">${EQUIP_ICONS[q] || ""}</svg></i>${esc(q)}</div>`).join("")}</div>
+    <div class="instr"><h3>Instructions</h3><p id="w-instr"></p></div>
+    ${WORKOUT.blocks.map(block).join("")}`;
+  moreText($("w-instr"), WORKOUT.instructions, 200);
+  $("w-check").onclick = () => { setDone(!isDone()); $("w-check").classList.toggle("on", isDone()); };
+  document.querySelectorAll("#w-body .erow").forEach(r => r.onclick = () => go("#w/ex/" + r.dataset.ex));
+}
+function renderExercise(i){
+  const e = EXERCISES[i]; if (!e) return go("#w");
+  $("e-name").textContent = e.name;
+  $("e-cue").textContent = e.cue;
+  $("e-sets").textContent = e.line + (e.block.type === "sets" ? `, rest ${e.block.rest} sec between sets` : "");
+  const id = e.video ? encodeURIComponent(e.video) : "";
+  $("e-video").innerHTML = id ? `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="${esc(e.name)} demo video"></iframe>` : "";
+}
+function go(hash){ if (location.hash !== hash) location.hash = hash; else route(); }
+function route(){
+  const h = location.hash;
+  const m = h.match(/^#w\/ex\/(\d+)$/);
+  $("v-list").hidden = !!(h.startsWith("#w"));
+  $("v-workout").hidden = h !== "#w";
+  $("v-exercise").hidden = !m;
+  if (!m) $("e-video").innerHTML = "";        // stop the demo video when leaving
+  if (!h.startsWith("#w")) renderList();
+  else if (h === "#w") renderWorkout();
+  else renderExercise(+m[1]);
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+$("w-close").onclick = () => go("");
+$("e-back").onclick = () => go("#w");
+$("w-settings").onclick = () => { $("settings").hidden = false; };
+$("s-close").onclick = () => { $("settings").hidden = true; };
+$("settings").addEventListener("click", e => { if (e.target.id === "settings") $("settings").hidden = true; });
+function renderHome(){
+  $("autoCount").checked = settings.autoCount;
+  $("voice").checked = settings.voice;
+  $("beeps").checked = settings.beeps;
+  $("zoom").checked = settings.zoom;
+}
+["autoCount","voice","beeps","zoom"].forEach(k => $(k).addEventListener("change", e => { settings[k] = e.target.checked; saveSettings(); renderHome(); }));
+
+/* ---------------- Sound & voice ---------------- */
+let ac;
+function beep(freq = 880, dur = .15, vol = .25){
+  if (!settings.beeps) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sine"; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + dur);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
+  } catch (e) {}
+}
+function say(text){
+  if (!settings.voice || !("speechSynthesis" in window)) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {}
+}
+
+/* ---------------- Keep the screen awake ---------------- */
+let wakeLock = null;
+async function lockScreen(){ try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {} }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !$("player").hidden) lockScreen(); });
+
+/* ---------------- Video ---------------- */
+let currentVideoKey = null;
+let ytReady = false, ytPlayer = null, ytPlayerReady = false, ytFailed = false, ytStarted = false, ytState = -1;
+window.onYouTubeIframeAPIReady = () => { ytReady = true; };
+(function loadYT(){
+  const sc = document.createElement("script");
+  sc.src = "https://www.youtube.com/iframe_api";
+  document.head.append(sc);
+})();
+function setVideo(ex){
+  let key = ex.video ? "yt:" + ex.video : "ph:" + ex.name;
+  if (ex.video && !ytReady) key += shouldPlay() ? ":play" : ":hold";
+  if (key === currentVideoKey) return;
+  currentVideoKey = key;
+  try { ytPlayer && ytPlayer.destroy && ytPlayer.destroy(); } catch (e) {}
+  ytPlayer = null; ytPlayerReady = false; ytFailed = false; ytStarted = false; ytState = -1;
+  const stage = $("stage");
+  stage.innerHTML = "";
+  if (ex.video && ytReady){
+    const host = document.createElement("div");
+    stage.append(host);
+    const id = ex.video;
+    const player = new YT.Player(host, {
+      host: "https://www.youtube-nocookie.com",
+      videoId: id,
+      playerVars: { autoplay: 1, mute: 1, controls: 0, playsinline: 1, rel: 0, modestbranding: 1, iv_load_policy: 3, disablekb: 1, fs: 0 },
+      events: {
+        onReady: e => {
+          if (player !== ytPlayer) return;
+          ytPlayerReady = true;
+          try {
+            e.target.mute();
+            const f = e.target.getIframe(); f.title = `${ex.name} demo video`; f.tabIndex = -1;
+            if (shouldPlay()) e.target.playVideo(); else holdVideo();
+          } catch (err) {}
+        },
+        // Autoplay loads the first frame; stop it straight away if we're resting.
+        onStateChange: e => {
+          if (player !== ytPlayer) return;
+          ytState = e.data;
+          if (e.data === 1){ ytStarted = true; if (!shouldPlay()) holdVideo(); }
+          if (e.data === 0 && shouldPlay()){ try { e.target.seekTo(0, true); e.target.playVideo(); } catch (err) {} }
+          updateCover();
+        },
+        onError: () => { if (player === ytPlayer) ytFailed = true; }
+      }
+    });
+    ytPlayer = player;
+  } else if (ex.video){
+    const f = document.createElement("iframe");
+    const id = encodeURIComponent(ex.video);
+    f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=${shouldPlay() ? 1 : 0}&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3`;
+    f.allow = "autoplay; encrypted-media; picture-in-picture";
+    f.title = `${ex.name} demo video`;
+    f.tabIndex = -1;
+    stage.append(f);
+  } else {
+    const p = document.createElement("div");
+    p.className = "placeholder";
+    p.innerHTML = `<b></b><span>Demo video not added yet</span>`;
+    p.querySelector("b").textContent = ex.name;
+    stage.append(p);
+  }
+  if (paused) showPausedBadge(true);
+}
+// Our own cover sits over the video whenever it isn't playing, so YouTube's title,
+// logo and play button never show. It uses the video's thumbnail as the preview.
+function updateCover(){
+  const s = steps[idx]; if (!s) return;
+  const ex = s.kind === "work" ? s : s.next;
+  const cover = $("cover");
+  let label = null;
+  if (ex.video){
+    if (paused) label = "Paused";
+    else if (s.kind === "work" && lead > 0) label = "Get set";
+    else if (s.kind !== "work") label = s.start ? "First up" : "Up next";
+    else if (ytReady && !ytFailed && !ytStarted) label = "Loading";
+    else if (ytReady && !ytFailed && ytState === 0) label = "";
+  }
+  cover.classList.toggle("on", label !== null);
+  if (label === null) return;
+  const img = $("cover-img"), src = `https://i.ytimg.com/vi/${encodeURIComponent(ex.video)}/hqdefault.jpg`;
+  if (img.getAttribute("src") !== src){ img.style.visibility = "visible"; img.src = src; }
+  img.onerror = () => { img.style.visibility = "hidden"; };
+  $("cover-label").textContent = label;
+}
+// Video only plays during work. During rest, countdowns and pauses it holds on the first frame.
+function shouldPlay(){ return !paused && lead <= 0 && steps[idx] && steps[idx].kind === "work"; }
+// True when the demo video is actually playing (or there's no controllable video).
+function videoPlaying(){
+  if (!ytPlayer || ytFailed) return true;
+  if (!ytPlayerReady) return false;
+  try { const st = ytPlayer.getPlayerState(); return st === 1 || st === 0; } catch (e) { return true; }
+}
+function restartVideo(){
+  if (!ytPlayer || !ytPlayerReady || ytFailed) return;
+  try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch (e) {}
+}
+function keepLooping(){
+  if (!ytPlayer || !ytPlayerReady || ytFailed || !shouldPlay()) return;
+  try {
+    const dur = ytPlayer.getDuration(), cur = ytPlayer.getCurrentTime();
+    if (dur > 1 && cur >= dur - 0.3) ytPlayer.seekTo(0, true);
+  } catch (e) {}
+}
+function holdVideo(){
+  if (!ytPlayer || !ytPlayerReady) return;
+  try { ytPlayer.pauseVideo(); ytPlayer.seekTo(0, true); } catch (e) {}
+}
+function pauseVideo(on){
+  if (!ytPlayer || !ytPlayerReady) return;
+  try { on ? ytPlayer.pauseVideo() : ytPlayer.playVideo(); } catch (e) {}
+}
+function showPausedBadge(on){
+  let b = $("stage").querySelector(".paused-badge");
+  if (on && !b){ b = document.createElement("div"); b.className = "paused-badge"; b.textContent = "Paused"; $("stage").append(b); }
+  if (!on && b) b.remove();
+}
+
+/* ---------------- Player engine ---------------- */
+let lead = 0, stall = 0, idx = 0, t = 0, paused = false, lastTick = 0, timer = null, lastBeep = null, lastRep = 0, startTime = 0, sideAnnounced = false;
+
+function startWorkout(){
+  steps = buildSteps();
+  idx = 0; t = 0; paused = false; startTime = Date.now();
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch (e) {}
+  $("e-video").innerHTML = "";
+  $("home").hidden = true; $("done").hidden = true; $("player").hidden = false;
+  try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {}
+  lockScreen();
+  $("player").classList.toggle("zoom", !!settings.zoom);
+  clearTimeout(idleTimer);
+  $("player").classList.add("idle");   // controls stay hidden until the screen is touched
+  $("segs").innerHTML = steps.filter(s => s.kind === "work").map(() => "<i></i>").join("");
+  currentVideoKey = null;
+  enterStep();
+  lastTick = performance.now();
+  clearInterval(timer);
+  timer = setInterval(tick, 100);
+}
+
+function enterStep(){
+  const s = steps[idx];
+  t = 0; stall = 0; lead = s.kind === "work" ? LEAD_SECONDS : 0; lastBeep = null; lastRep = 0; sideAnnounced = false;
+  $("player").classList.toggle("is-rest", s.kind !== "work");
+  setVideo(s.kind === "work" ? s : s.next);
+  holdVideo();   // video waits on its first frame until the set actually starts
+  updateCover();
+  if (s.kind === "work"){
+    say(`${s.name}${s.setLabel ? ", " + s.setLabel.toLowerCase() : ""}.`);
+  } else {
+    const n = s.next;
+    const what = `${n.name}${n.setLabel ? ", " + n.setLabel.toLowerCase() : ""}`;
+    say(s.start ? `Get ready. First up, ${what}.` : s.kind === "rest" ? `Rest ${s.dur} seconds. Next up, ${what}.` : `Next, ${what}.`);
+  }
+  render();
+}
+
+function beginSet(){
+  const s = steps[idx];
+  lead = 0; t = 0; stall = 0; lastRep = 0;
+  beep(988, .28, .3);
+  restartVideo();   // video and rep count start together
+  if (s.mode === "manual" || (s.mode === "reps" && !settings.autoCount)) say(`Go. ${s.target}. Tap done when finished.`);
+  else if (s.mode === "time") say(`Go. ${s.time} seconds.`);
+  else say(`Go${s.alternate ? ". Alternate sides, left first" : s.perSide ? ". Left side first" : ""}.`);
+  updateCover();
+  render();
+}
+
+function advance(){
+  idx++;
+  if (idx >= steps.length){ finish(); return; }
+  enterStep();
+}
+
+function goBack(){
+  const s = steps[idx];
+  if (s.kind === "work" && t > 3){ enterStep(); return; }
+  let j = idx - 1;
+  while (j >= 0 && steps[j].kind !== "work") j--;
+  if (j < 0) j = 0;
+  idx = j; enterStep();
+}
+
+let idleTimer;
+function wake(){
+  const p = $("player");
+  p.classList.remove("idle");
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { if (!paused) p.classList.add("idle"); }, 4000);
+}
+let swallowTap = false;
+$("player").addEventListener("pointerdown", () => {
+  if ($("player").classList.contains("idle")){ swallowTap = true; setTimeout(() => { swallowTap = false; }, 700); }
+  wake();
+}, true);
+$("player").addEventListener("click", e => {
+  if (swallowTap){ swallowTap = false; e.stopPropagation(); e.preventDefault(); }
+}, true);
+
+function togglePause(){
+  paused = !paused;
+  wake();
+  pauseVideo(!shouldPlay());
+  updateCover();
+  $("pauseBtn").innerHTML = paused ? ICON_PLAY : ICON_PAUSE;
+  $("pauseBtn").setAttribute("aria-label", paused ? "Resume" : "Pause");
+  showPausedBadge(paused);
+  if (paused && "speechSynthesis" in window) speechSynthesis.cancel();
+  render();
+}
+
+function tick(){
+  keepLooping();
+  const now = performance.now(), dt = (now - lastTick) / 1000;
+  lastTick = now;
+  if (paused) return;
+  const s = steps[idx];
+  if (s.kind === "work" && lead > 0){
+    const before = Math.ceil(lead);
+    lead -= dt;
+    if (lead <= 0){ beginSet(); return; }
+    if (Math.ceil(lead) !== before) beep(660, .12);
+    render(); return;
+  }
+  // Rep counting follows the video: hold the count while the clip loads or buffers.
+  const synced = s.kind === "work" && s.mode === "reps" && settings.autoCount;
+  if (synced && !videoPlaying() && stall < 2){ stall += dt; render(); return; }
+  t += dt;
+  const d = stepDur(s);
+  if (isFinite(d)){
+    const remain = Math.ceil(d - t);
+    if ((s.kind !== "work" || s.mode === "time") && remain <= 3 && remain >= 1 && remain !== lastBeep){ beep(660, .12); lastBeep = remain; }
+    if (t >= d){ advance(); return; }
+  }
+  if (s.kind === "work" && s.mode === "reps" && settings.autoCount){
+    const rep = Math.min(Math.floor(t / repSec(s)) + 1, s.repMax * (s.perSide ? 2 : 1));
+    if (rep !== lastRep){
+      if (lastRep) beep(520, .06, .15);
+      lastRep = rep;
+      if (s.perSide && !s.alternate && rep === s.repMax + 1 && !sideAnnounced){ sideAnnounced = true; say("Switch sides"); }
+    }
+  }
+  render();
+}
+
+function render(){
+  const s = steps[idx];
+  const d = stepDur(s);
+  const big = $("p-big"), side = $("p-side"), chips = $("p-chips");
+  big.classList.remove("in-range");
+  side.innerHTML = "";
+  if (s.kind === "work"){
+    $("p-pos").textContent = s.position;
+    $("p-name").textContent = s.name;
+    chips.innerHTML = (s.setLabel ? `<span class="chip solid">${s.setLabel}</span>` : `<span class="chip solid">${s.section}</span>`) + `<span class="chip">${s.target}</span>`;
+    if (lead > 0){
+      big.textContent = Math.ceil(lead);
+      side.innerHTML = `<b>Get set</b><span>Starting in</span>`;
+    } else if (s.mode === "time"){
+      big.textContent = Math.ceil(Math.max(0, d - t));
+      side.innerHTML = `<b>sec</b><span>${s.note || "hold and breathe"}</span>`;
+    } else if (s.mode === "reps" && settings.autoCount){
+      const total = s.repMax * (s.perSide ? 2 : 1);
+      const rep = Math.min(Math.floor(t / repSec(s)) + 1, total);
+      // Alternating moves switch sides every rep; others do all of one side, then the other.
+      const shown = s.alternate ? Math.ceil(rep / 2) : s.perSide ? ((rep - 1) % s.repMax) + 1 : rep;
+      big.textContent = shown;
+      if (shown >= s.repMin) big.classList.add("in-range");
+      const sideTxt = s.alternate ? (rep % 2 ? "Left side" : "Right side")
+        : s.perSide ? (rep <= s.repMax ? "Left side" : "Right side") : (s.repMin !== s.repMax ? (shown >= s.repMin ? "Keep going or tap done" : `Aim for ${s.repMin}–${s.repMax}`) : "reps");
+      side.innerHTML = `<b>of ${s.repMax}</b><span>${sideTxt}</span>`;
+    } else {
+      big.textContent = s.mode === "manual" ? "Go" : fmtRange(s.reps);
+      side.innerHTML = `<b>${s.mode === "manual" ? "" : "reps"}</b><span>Tap done when finished</span>`;
+    }
+    $("p-cue").innerHTML = "";
+    $("p-bar").style.width = isFinite(d) ? `${Math.min(100, t / d * 100)}%` : "0%";
+    $("nextBtn").textContent = "Done";
+  } else {
+    const n = s.next;
+    $("p-pos").textContent = s.start ? "Starting in" : s.kind === "rest" ? "Rest" : "Get ready";
+    $("p-name").textContent = `${s.start ? "First up" : "Next"}: ${n.name}`;
+    chips.innerHTML = (n.setLabel ? `<span class="chip solid">${n.setLabel}</span>` : "") + `<span class="chip">${n.target}</span>`;
+    big.textContent = Math.ceil(Math.max(0, d - t));
+    side.innerHTML = `<b>sec</b><span>${s.kind === "rest" ? "Breathe, reset" : "Get in position"}</span>`;
+    $("p-cue").innerHTML = "<small>Coach’s cue</small>";
+    $("p-cue").append(document.createTextNode(n.cue));
+    $("p-bar").style.width = `${Math.min(100, t / d * 100)}%`;
+    $("nextBtn").textContent = s.kind === "rest" ? "Skip rest" : "Start now";
+  }
+  // Time left and overall progress
+  let left = Math.max(0, (isFinite(d) ? d : MANUAL_ESTIMATE) - t);
+  for (let j = idx + 1; j < steps.length; j++) left += estDur(steps[j]);
+  $("p-left").textContent = `${fmtClock(left)} left`;
+  const workIdx = steps.slice(0, idx + 1).filter(x => x.kind === "work").length - (s.kind === "work" ? 1 : 0);
+  document.querySelectorAll("#segs i").forEach((seg, i) => {
+    seg.className = i < workIdx ? "past" : (i === workIdx && s.kind === "work") ? "now" : "";
+  });
+}
+
+function finish(){
+  clearInterval(timer);
+  try { wakeLock && wakeLock.release(); } catch (e) {}
+  try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {}
+  setDone(true);
+  $("player").hidden = true; $("done").hidden = false;
+  const mins = Math.round((Date.now() - startTime) / 60000);
+  $("d-text").textContent = `You finished ${WORKOUT.title} in ${mins} minute${mins === 1 ? "" : "s"}. Nice work.`;
+  beep(988, .2); setTimeout(() => beep(1318, .35), 220);
+  say("Workout complete. Nice work.");
+}
+
+function endWorkout(){
+  clearInterval(timer);
+  try { speechSynthesis.cancel(); } catch (e) {}
+  try { wakeLock && wakeLock.release(); } catch (e) {}
+  try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {}
+  paused = false; $("pauseBtn").innerHTML = ICON_PAUSE; $("pauseBtn").setAttribute("aria-label", "Pause");
+  $("player").hidden = true; $("home").hidden = false;
+  renderHome(); route();
+}
+
+$("startBtn").addEventListener("click", startWorkout);
+$("againBtn").addEventListener("click", () => { $("done").hidden = true; $("home").hidden = false; renderHome(); go("#w"); });
+$("nextBtn").addEventListener("click", advance);
+$("backBtn").addEventListener("click", goBack);
+$("pauseBtn").addEventListener("click", togglePause);
+$("endBtn").addEventListener("click", endWorkout);
+document.addEventListener("keydown", e => {
+  if ($("player").hidden) return;
+  wake();
+  if (e.key === " "){ e.preventDefault(); togglePause(); }
+  else if (e.key === "ArrowRight" || e.key === "Enter"){ e.preventDefault(); advance(); }
+  else if (e.key === "ArrowLeft"){ e.preventDefault(); goBack(); }
+});
+
+document.querySelectorAll(".version").forEach(el => el.textContent = "v" + APP_VERSION);
+renderHome(); route();
+</script>
+</body>
+</html>
