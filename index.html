@@ -78,7 +78,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 .stage-wrap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:30%;background:linear-gradient(transparent,rgba(0,0,0,.65));pointer-events:none;transition:opacity .35s}
 .player.idle .stage-wrap::after{opacity:0}
 .stage iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0;pointer-events:none}
-.player.zoom .stage iframe{height:auto;aspect-ratio:9/16;top:50%;transform:translateY(-50%)}
+.player.zoom .stage iframe{height:auto;aspect-ratio:9/16;top:50%;transform:translateY(-50%) scale(1.04)}
+/* Cover that hides YouTube's own overlays (title, logo, play button) while loading, resting or paused */
+.cover{position:absolute;inset:0;z-index:1;background:#000;overflow:hidden;display:none}
+.cover.on{display:block}
+.cover img{position:absolute;top:0;left:50%;height:100%;width:auto;transform:translateX(-50%)}
+.player.zoom .cover img{transform:translateX(-50%) scale(1.334)}
+.cover span{position:absolute;top:max(14px,3vh);left:max(14px,3vh);background:rgba(0,0,0,.6);color:#fff;font-weight:700;font-size:max(13px,2.2vh);padding:.4em .9em;border-radius:999px}
 .placeholder{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:8%;color:#F3F4F6;background:linear-gradient(160deg,#2A2E34,#15171A)}
 .placeholder b{font-family:var(--cond);font-weight:700;font-size:4vh;line-height:1}
 .placeholder span{color:#A2A8B0;margin-top:1vh;font-size:2vh}
@@ -175,6 +181,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <div class="player" id="player" hidden>
   <div class="stage-wrap">
     <div class="stage" id="stage"></div>
+    <div class="cover" id="cover"><img id="cover-img" alt=""><span id="cover-label"></span></div>
     <div class="controls" id="controls">
       <button class="ctl" id="backBtn" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.5v14H6zM10 12l9-7v14z"/></svg></button>
       <button class="ctl" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg></button>
@@ -359,7 +366,7 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 
 /* ---------------- Video ---------------- */
 let currentVideoKey = null;
-let ytReady = false, ytPlayer = null, ytPlayerReady = false, ytFailed = false;
+let ytReady = false, ytPlayer = null, ytPlayerReady = false, ytFailed = false, ytStarted = false;
 window.onYouTubeIframeAPIReady = () => { ytReady = true; };
 (function loadYT(){
   const sc = document.createElement("script");
@@ -372,7 +379,7 @@ function setVideo(ex){
   if (key === currentVideoKey) return;
   currentVideoKey = key;
   try { ytPlayer && ytPlayer.destroy && ytPlayer.destroy(); } catch (e) {}
-  ytPlayer = null; ytPlayerReady = false; ytFailed = false;
+  ytPlayer = null; ytPlayerReady = false; ytFailed = false; ytStarted = false;
   const stage = $("stage");
   stage.innerHTML = "";
   if (ex.video && ytReady){
@@ -394,7 +401,11 @@ function setVideo(ex){
           } catch (err) {}
         },
         // Autoplay loads the first frame; stop it straight away if we're resting.
-        onStateChange: e => { if (player === ytPlayer && e.data === 1 && !shouldPlay()) holdVideo(); },
+        onStateChange: e => {
+          if (player !== ytPlayer) return;
+          if (e.data === 1){ ytStarted = true; if (!shouldPlay()) holdVideo(); }
+          updateCover();
+        },
         onError: () => { if (player === ytPlayer) ytFailed = true; }
       }
     });
@@ -415,6 +426,25 @@ function setVideo(ex){
     stage.append(p);
   }
   if (paused) showPausedBadge(true);
+}
+// Our own cover sits over the video whenever it isn't playing, so YouTube's title,
+// logo and play button never show. It uses the video's thumbnail as the preview.
+function updateCover(){
+  const s = steps[idx]; if (!s) return;
+  const ex = s.kind === "work" ? s : s.next;
+  const cover = $("cover");
+  let label = null;
+  if (ex.video){
+    if (paused) label = "Paused";
+    else if (s.kind !== "work") label = s.start ? "First up" : "Up next";
+    else if (ytReady && !ytFailed && !ytStarted) label = "Loading";
+  }
+  cover.classList.toggle("on", !!label);
+  if (!label) return;
+  const img = $("cover-img"), src = `https://i.ytimg.com/vi/${encodeURIComponent(ex.video)}/hqdefault.jpg`;
+  if (img.getAttribute("src") !== src){ img.style.visibility = "visible"; img.src = src; }
+  img.onerror = () => { img.style.visibility = "hidden"; };
+  $("cover-label").textContent = label;
 }
 // Video only plays during work. During rest, countdowns and pauses it holds on the first frame.
 function shouldPlay(){ return !paused && steps[idx] && steps[idx].kind === "work"; }
@@ -470,6 +500,7 @@ function enterStep(){
   setVideo(s.kind === "work" ? s : s.next);
   if (s.kind === "work") restartVideo();   // video and rep count start together
   else holdVideo();                        // no video playback during rest
+  updateCover();
   if (s.kind === "work"){
     beep(988, .28, .3);
     if (s.mode === "manual" || (s.mode === "reps" && !settings.autoCount)) say(`${s.name}. ${s.target}. Tap done when finished.`);
@@ -511,6 +542,7 @@ function togglePause(){
   paused = !paused;
   wake();
   pauseVideo(!shouldPlay());
+  updateCover();
   $("pauseBtn").innerHTML = paused ? ICON_PLAY : ICON_PAUSE;
   $("pauseBtn").setAttribute("aria-label", paused ? "Resume" : "Pause");
   showPausedBadge(paused);
