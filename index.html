@@ -248,7 +248,8 @@ const WORKOUT = {
   ]
 };
 const READY_SECONDS = 10;      // short "get ready" gap between moves in a circuit
-const START_SECONDS = 10;     // countdown after tapping Start workout
+const START_SECONDS = 10;
+const LEAD_SECONDS = 3;       // "get set" pause on each exercise screen before the set begins     // countdown after tapping Start workout
 const ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg>';
 const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>';
 //      // short "get ready" gap between moves in a circuit
@@ -439,6 +440,7 @@ function updateCover(){
   let label = null;
   if (ex.video){
     if (paused) label = "Paused";
+    else if (s.kind === "work" && lead > 0) label = "Get set";
     else if (s.kind !== "work") label = s.start ? "First up" : "Up next";
     else if (ytReady && !ytFailed && !ytStarted) label = "Loading";
     else if (ytReady && !ytFailed && ytState === 0) label = "";
@@ -451,7 +453,7 @@ function updateCover(){
   $("cover-label").textContent = label;
 }
 // Video only plays during work. During rest, countdowns and pauses it holds on the first frame.
-function shouldPlay(){ return !paused && steps[idx] && steps[idx].kind === "work"; }
+function shouldPlay(){ return !paused && lead <= 0 && steps[idx] && steps[idx].kind === "work"; }
 // True when the demo video is actually playing (or there's no controllable video).
 function videoPlaying(){
   if (!ytPlayer || ytFailed) return true;
@@ -484,7 +486,7 @@ function showPausedBadge(on){
 }
 
 /* ---------------- Player engine ---------------- */
-let stall = 0, idx = 0, t = 0, paused = false, lastTick = 0, timer = null, lastBeep = null, lastRep = 0, startTime = 0, sideAnnounced = false;
+let lead = 0, stall = 0, idx = 0, t = 0, paused = false, lastTick = 0, timer = null, lastBeep = null, lastRep = 0, startTime = 0, sideAnnounced = false;
 
 function startWorkout(){
   steps = buildSteps();
@@ -506,22 +508,30 @@ function startWorkout(){
 
 function enterStep(){
   const s = steps[idx];
-  t = 0; stall = 0; lastBeep = null; lastRep = 0; sideAnnounced = false;
+  t = 0; stall = 0; lead = s.kind === "work" ? LEAD_SECONDS : 0; lastBeep = null; lastRep = 0; sideAnnounced = false;
   $("player").classList.toggle("is-rest", s.kind !== "work");
   setVideo(s.kind === "work" ? s : s.next);
-  if (s.kind === "work") restartVideo();   // video and rep count start together
-  else holdVideo();                        // no video playback during rest
+  holdVideo();   // video waits on its first frame until the set actually starts
   updateCover();
   if (s.kind === "work"){
-    beep(988, .28, .3);
-    if (s.mode === "manual" || (s.mode === "reps" && !settings.autoCount)) say(`${s.name}. ${s.target}. Tap done when finished.`);
-    else if (s.mode === "time") say(`${s.name}. ${s.time} seconds. Go.`);
-    else say(`Go. ${s.target}${s.perSide ? ". Left side first" : ""}.`);
+    say(`${s.name}${s.setLabel ? ", " + s.setLabel.toLowerCase() : ""}.`);
   } else {
     const n = s.next;
     const what = `${n.name}${n.setLabel ? ", " + n.setLabel.toLowerCase() : ""}`;
     say(s.start ? `Get ready. First up, ${what}.` : s.kind === "rest" ? `Rest ${s.dur} seconds. Next up, ${what}.` : `Next, ${what}.`);
   }
+  render();
+}
+
+function beginSet(){
+  const s = steps[idx];
+  lead = 0; t = 0; stall = 0; lastRep = 0;
+  beep(988, .28, .3);
+  restartVideo();   // video and rep count start together
+  if (s.mode === "manual" || (s.mode === "reps" && !settings.autoCount)) say(`Go. ${s.target}. Tap done when finished.`);
+  else if (s.mode === "time") say(`Go. ${s.time} seconds.`);
+  else say(`Go${s.perSide ? ". Left side first" : ""}.`);
+  updateCover();
   render();
 }
 
@@ -567,6 +577,13 @@ function tick(){
   lastTick = now;
   if (paused) return;
   const s = steps[idx];
+  if (s.kind === "work" && lead > 0){
+    const before = Math.ceil(lead);
+    lead -= dt;
+    if (lead <= 0){ beginSet(); return; }
+    if (Math.ceil(lead) !== before) beep(660, .12);
+    render(); return;
+  }
   // Rep counting follows the video: hold the count while the clip loads or buffers.
   const synced = s.kind === "work" && s.mode === "reps" && settings.autoCount;
   if (synced && !videoPlaying() && stall < 5){ stall += dt; render(); return; }
@@ -598,7 +615,10 @@ function render(){
     $("p-pos").textContent = s.position;
     $("p-name").textContent = s.name;
     chips.innerHTML = (s.setLabel ? `<span class="chip solid">${s.setLabel}</span>` : `<span class="chip solid">${s.section}</span>`) + `<span class="chip">${s.target}</span>`;
-    if (s.mode === "time"){
+    if (lead > 0){
+      big.textContent = Math.ceil(lead);
+      side.innerHTML = `<b>Get set</b><span>Starting in</span>`;
+    } else if (s.mode === "time"){
       big.textContent = Math.ceil(Math.max(0, d - t));
       side.innerHTML = `<b>sec</b><span>${s.note || "hold and breathe"}</span>`;
     } else if (s.mode === "reps" && settings.autoCount){
