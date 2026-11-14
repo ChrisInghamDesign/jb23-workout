@@ -444,7 +444,8 @@ function startWorkout(){
   try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {}
   lockScreen();
   $("player").classList.toggle("zoom", !!settings.zoom);
-  wake();
+  clearTimeout(idleTimer);
+  $("player").classList.add("idle");   // controls stay hidden until the screen is touched
   $("segs").innerHTML = steps.filter(s => s.kind === "work").map(() => "<i></i>").join("");
   currentVideoKey = null;
   enterStep();
