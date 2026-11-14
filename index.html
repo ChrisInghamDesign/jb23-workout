@@ -125,7 +125,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .ctl svg{width:44%;height:44%;fill:currentColor}
 .ctl.primary{width:auto;border-radius:999px;padding:0 max(20px,3vh);background:var(--gold);color:var(--on-gold);font-weight:800;font-size:max(16px,2.8vh)}
 .is-rest .ctl.primary{background:#fff;color:#15171A}
-.end-btn{background:none;border:.25vh solid var(--pline);color:var(--pink);border-radius:1.2vh;padding:.3em .9em;font-weight:700;font-size:max(13px,2.2vh);margin-left:1.5vw;transition:opacity .35s;touch-action:manipulation}
+.end-btn svg{width:1.05em;height:1.05em;fill:currentColor;margin-right:.4em;vertical-align:-.15em}
+.end-btn{display:inline-flex;align-items:center;background:none;border:.25vh solid var(--pline);color:var(--pink);border-radius:1.2vh;padding:.3em .9em;font-weight:700;font-size:max(13px,2.2vh);margin-left:1.5vw;transition:opacity .35s;touch-action:manipulation}
 .player.idle .end-btn{opacity:0;pointer-events:none}
 
 /* Phone held upright (not casting) */
@@ -190,7 +191,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     </div>
   </div>
   <div class="panel">
-    <div class="topline"><span id="p-pos"></span><span><span class="left-time" id="p-left"></span><button class="end-btn" id="endBtn">End</button></span></div>
+    <div class="topline"><span id="p-pos"></span><span><span class="left-time" id="p-left"></span><button class="end-btn" id="endBtn" aria-label="End workout and go to the home screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg>Home</button></span></div>
     <h2 class="name" id="p-name"></h2>
     <div class="chips" id="p-chips"></div>
     <div class="count"><div class="big" id="p-big"></div><div class="count-side" id="p-side"></div></div>
