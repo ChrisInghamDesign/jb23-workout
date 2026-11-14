@@ -167,11 +167,6 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div class="settings">
       <h2>Settings</h2>
       <div class="row"><label for="autoCount">Count reps for me</label><input type="checkbox" class="switch" id="autoCount"></div>
-      <div class="row"><span id="tempoLabel">Rep pace</span>
-        <div class="seg" role="group" aria-labelledby="tempoLabel" id="tempo">
-          <button data-v="2">Fast</button><button data-v="3">Mid</button><button data-v="4">Slow</button>
-        </div>
-      </div>
       <div class="row"><label for="zoom">Zoom video to fill more of the TV</label><input type="checkbox" class="switch" id="zoom"></div>
       <div class="row"><label for="voice">Voice cues</label><input type="checkbox" class="switch" id="voice"></div>
       <div class="row"><label for="beeps">Beeps</label><input type="checkbox" class="switch" id="beeps"></div>
@@ -257,7 +252,7 @@ const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l
 const MANUAL_ESTIMATE = 40;   // seconds assumed for tap-to-finish moves when estimating time
 
 /* ---------------- Settings ---------------- */
-const settings = { autoCount: true, tempo: 3, voice: true, beeps: true, zoom: true };
+const settings = { autoCount: true, voice: true, beeps: true, zoom: true };
 try { Object.assign(settings, JSON.parse(localStorage.getItem("jb23-settings") || "{}")); } catch (e) {}
 function saveSettings(){ try { localStorage.setItem("jb23-settings", JSON.stringify(settings)); } catch (e) {} }
 
@@ -307,7 +302,8 @@ function buildSteps(){
 let steps = buildSteps();
 
 // Seconds per rep. Set `repSec` on an exercise to match its video exactly.
-function repSec(s){ return s.repSec || settings.tempo; }
+const DEFAULT_REP_SEC = 2;   // matches the pace of the demo videos
+function repSec(s){ return s.repSec || DEFAULT_REP_SEC; }
 function stepDur(s){
   if (s.kind !== "work") return s.dur;
   if (s.mode === "time") return s.time;
@@ -339,10 +335,8 @@ function renderHome(){
   $("voice").checked = settings.voice;
   $("beeps").checked = settings.beeps;
   $("zoom").checked = settings.zoom;
-  document.querySelectorAll("#tempo button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === settings.tempo)));
 }
 ["autoCount","voice","beeps","zoom"].forEach(k => $(k).addEventListener("change", e => { settings[k] = e.target.checked; saveSettings(); renderHome(); }));
-document.querySelectorAll("#tempo button").forEach(b => b.addEventListener("click", () => { settings.tempo = +b.dataset.v; saveSettings(); renderHome(); }));
 
 /* ---------------- Sound & voice ---------------- */
 let ac;
