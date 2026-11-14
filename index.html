@@ -84,6 +84,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .cover.on{display:block}
 .cover img{position:absolute;top:0;left:50%;height:100%;width:auto;transform:translateX(-50%)}
 .player.zoom .cover img{transform:translateX(-50%) scale(1.334)}
+.cover span:empty{display:none}
 .cover span{position:absolute;top:max(14px,3vh);left:max(14px,3vh);background:rgba(0,0,0,.6);color:#fff;font-weight:700;font-size:max(13px,2.2vh);padding:.4em .9em;border-radius:999px}
 .placeholder{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:8%;color:#F3F4F6;background:linear-gradient(160deg,#2A2E34,#15171A)}
 .placeholder b{font-family:var(--cond);font-weight:700;font-size:4vh;line-height:1}
@@ -246,7 +247,7 @@ const WORKOUT = {
     ]}
   ]
 };
-const READY_SECONDS = 6;      // short "get ready" gap between moves in a circuit
+const READY_SECONDS = 10;      // short "get ready" gap between moves in a circuit
 const START_SECONDS = 10;     // countdown after tapping Start workout
 const ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg>';
 const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>';
@@ -366,7 +367,7 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 
 /* ---------------- Video ---------------- */
 let currentVideoKey = null;
-let ytReady = false, ytPlayer = null, ytPlayerReady = false, ytFailed = false, ytStarted = false;
+let ytReady = false, ytPlayer = null, ytPlayerReady = false, ytFailed = false, ytStarted = false, ytState = -1;
 window.onYouTubeIframeAPIReady = () => { ytReady = true; };
 (function loadYT(){
   const sc = document.createElement("script");
@@ -379,7 +380,7 @@ function setVideo(ex){
   if (key === currentVideoKey) return;
   currentVideoKey = key;
   try { ytPlayer && ytPlayer.destroy && ytPlayer.destroy(); } catch (e) {}
-  ytPlayer = null; ytPlayerReady = false; ytFailed = false; ytStarted = false;
+  ytPlayer = null; ytPlayerReady = false; ytFailed = false; ytStarted = false; ytState = -1;
   const stage = $("stage");
   stage.innerHTML = "";
   if (ex.video && ytReady){
@@ -389,7 +390,7 @@ function setVideo(ex){
     const player = new YT.Player(host, {
       host: "https://www.youtube-nocookie.com",
       videoId: id,
-      playerVars: { autoplay: 1, mute: 1, loop: 1, playlist: id, controls: 0, playsinline: 1, rel: 0, modestbranding: 1, iv_load_policy: 3, disablekb: 1, fs: 0 },
+      playerVars: { autoplay: 1, mute: 1, controls: 0, playsinline: 1, rel: 0, modestbranding: 1, iv_load_policy: 3, disablekb: 1, fs: 0 },
       events: {
         onReady: e => {
           if (player !== ytPlayer) return;
@@ -403,7 +404,9 @@ function setVideo(ex){
         // Autoplay loads the first frame; stop it straight away if we're resting.
         onStateChange: e => {
           if (player !== ytPlayer) return;
+          ytState = e.data;
           if (e.data === 1){ ytStarted = true; if (!shouldPlay()) holdVideo(); }
+          if (e.data === 0 && shouldPlay()){ try { e.target.seekTo(0, true); e.target.playVideo(); } catch (err) {} }
           updateCover();
         },
         onError: () => { if (player === ytPlayer) ytFailed = true; }
@@ -438,9 +441,10 @@ function updateCover(){
     if (paused) label = "Paused";
     else if (s.kind !== "work") label = s.start ? "First up" : "Up next";
     else if (ytReady && !ytFailed && !ytStarted) label = "Loading";
+    else if (ytReady && !ytFailed && ytState === 0) label = "";
   }
-  cover.classList.toggle("on", !!label);
-  if (!label) return;
+  cover.classList.toggle("on", label !== null);
+  if (label === null) return;
   const img = $("cover-img"), src = `https://i.ytimg.com/vi/${encodeURIComponent(ex.video)}/hqdefault.jpg`;
   if (img.getAttribute("src") !== src){ img.style.visibility = "visible"; img.src = src; }
   img.onerror = () => { img.style.visibility = "hidden"; };
@@ -457,6 +461,13 @@ function videoPlaying(){
 function restartVideo(){
   if (!ytPlayer || !ytPlayerReady || ytFailed) return;
   try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch (e) {}
+}
+function keepLooping(){
+  if (!ytPlayer || !ytPlayerReady || ytFailed || !shouldPlay()) return;
+  try {
+    const dur = ytPlayer.getDuration(), cur = ytPlayer.getCurrentTime();
+    if (dur > 1 && cur >= dur - 0.3) ytPlayer.seekTo(0, true);
+  } catch (e) {}
 }
 function holdVideo(){
   if (!ytPlayer || !ytPlayerReady) return;
@@ -551,6 +562,7 @@ function togglePause(){
 }
 
 function tick(){
+  keepLooping();
   const now = performance.now(), dt = (now - lastTick) / 1000;
   lastTick = now;
   if (paused) return;
