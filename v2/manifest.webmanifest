@@ -1,0 +1,13 @@
+{
+  "name": "JB23 Fit Workouts",
+  "short_name": "JB23 Fit 2",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F6F6F7",
+  "theme_color": "#FFC629",
+  "icons": [
+    { "src": "../icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
