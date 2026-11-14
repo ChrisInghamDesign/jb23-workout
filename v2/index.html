@@ -316,7 +316,7 @@ const WORKOUT = {
     ]}
   ]
 };
-const APP_VERSION = "2.0";   // bump on every update so you can tell which version is loaded
+const APP_VERSION = "2.1";   // bump on every update so you can tell which version is loaded
 const READY_SECONDS = 10;      // short "get ready" gap between moves in a circuit
 const START_SECONDS = 10;
 const LEAD_SECONDS = 3;       // "get set" pause on each exercise screen before the set begins     // countdown after tapping Start workout
@@ -367,8 +367,8 @@ function buildSteps(){
     steps.push(w);
     const next = work[i+1];
     if (!next) return;
+    // Circuit moves run back to back, as in Trainerize (only the 3-second "get set" lead-in between them)
     if (typeof w.after === "number" && w.after > 0) steps.push({ kind: "rest", dur: w.after, next });
-    else steps.push({ kind: "ready", dur: READY_SECONDS, next });
   });
   if (work.length) steps.unshift({ kind: "ready", dur: START_SECONDS, next: work[0], start: true });
   return steps;
