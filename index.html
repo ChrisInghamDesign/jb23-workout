@@ -37,6 +37,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .home{min-height:100%;padding:calc(env(safe-area-inset-top,0px) + 28px) clamp(20px,5vw,72px) calc(env(safe-area-inset-bottom,0px) + 40px);
   display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(28px,5vw,80px);max-width:1280px;margin:0 auto;align-items:start}
 .brand{font-family:var(--cond);font-weight:800;font-size:1.25rem;display:flex;align-items:center;gap:10px;margin-bottom:clamp(24px,6vh,64px)}
+.brand .version{font-family:var(--body);font-weight:600;font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin-left:4px}
 .brand i{width:30px;height:30px;border-radius:8px;background:var(--gold);display:inline-block}
 .kicker{color:var(--muted);font-weight:600;font-size:1.05rem;margin:0 0 8px}
 .home h1{font-family:var(--cond);font-weight:800;font-size:clamp(3rem,8vw,6.5rem);line-height:.9;margin:0 0 20px;letter-spacing:-.01em}
@@ -152,7 +153,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 <main class="home" id="home">
   <div>
-    <div class="brand"><i aria-hidden="true"></i>JB23 Fit</div>
+    <div class="brand"><i aria-hidden="true"></i>JB23 Fit<span class="version"></span></div>
     <p class="kicker" id="h-kicker"></p>
     <h1 id="h-title"></h1>
     <p class="focus" id="h-focus"></p>
@@ -197,7 +198,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 </div>
 
 <main class="done" id="done" hidden>
-  <div class="brand"><i aria-hidden="true"></i>JB23 Fit</div>
+  <div class="brand"><i aria-hidden="true"></i>JB23 Fit<span class="version"></span></div>
   <h1>Workout complete</h1>
   <p id="d-text"></p>
   <div><button class="start" id="againBtn">Back to overview</button></div>
@@ -243,6 +244,7 @@ const WORKOUT = {
     ]}
   ]
 };
+const APP_VERSION = "12";   // bump on every update so you can tell which version is loaded
 const READY_SECONDS = 10;      // short "get ready" gap between moves in a circuit
 const START_SECONDS = 10;
 const LEAD_SECONDS = 3;       // "get set" pause on each exercise screen before the set begins     // countdown after tapping Start workout
@@ -690,6 +692,7 @@ document.addEventListener("keydown", e => {
   else if (e.key === "ArrowLeft"){ e.preventDefault(); goBack(); }
 });
 
+document.querySelectorAll(".version").forEach(el => el.textContent = "v" + APP_VERSION);
 renderHome();
 </script>
 </body>
