@@ -244,7 +244,7 @@ const WORKOUT = {
     ]}
   ]
 };
-const APP_VERSION = "12";   // bump on every update so you can tell which version is loaded
+const APP_VERSION = "13";   // bump on every update so you can tell which version is loaded
 const READY_SECONDS = 10;      // short "get ready" gap between moves in a circuit
 const START_SECONDS = 10;
 const LEAD_SECONDS = 3;       // "get set" pause on each exercise screen before the set begins     // countdown after tapping Start workout
@@ -554,7 +554,14 @@ function wake(){
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => { if (!paused) p.classList.add("idle"); }, 4000);
 }
-$("player").addEventListener("pointerdown", wake, true);
+let swallowTap = false;
+$("player").addEventListener("pointerdown", () => {
+  if ($("player").classList.contains("idle")){ swallowTap = true; setTimeout(() => { swallowTap = false; }, 700); }
+  wake();
+}, true);
+$("player").addEventListener("click", e => {
+  if (swallowTap){ swallowTap = false; e.stopPropagation(); e.preventDefault(); }
+}, true);
 
 function togglePause(){
   paused = !paused;
@@ -583,7 +590,7 @@ function tick(){
   }
   // Rep counting follows the video: hold the count while the clip loads or buffers.
   const synced = s.kind === "work" && s.mode === "reps" && settings.autoCount;
-  if (synced && !videoPlaying() && stall < 5){ stall += dt; render(); return; }
+  if (synced && !videoPlaying() && stall < 2){ stall += dt; render(); return; }
   t += dt;
   const d = stepDur(s);
   if (isFinite(d)){
