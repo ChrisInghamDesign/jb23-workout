@@ -72,14 +72,17 @@ button{font:inherit;color:inherit;cursor:pointer}
   --pbg:#15171A;--pink:#F3F4F6;--pmuted:#9EA4AC;--pline:#2E3238;
   padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .player.is-rest{--pbg:var(--gold);--pink:#15171A;--pmuted:rgba(21,23,26,.66);--pline:rgba(21,23,26,.22)}
-.stage{height:100%;aspect-ratio:9/16;flex:none;position:relative;overflow:hidden;background:#000}
-.player.zoom .stage{aspect-ratio:3/4}
+.stage-wrap{height:100%;aspect-ratio:9/16;flex:none;position:relative;background:#000}
+.player.zoom .stage-wrap{aspect-ratio:3/4}
+.stage{position:absolute;inset:0;overflow:hidden}
+.stage-wrap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:30%;background:linear-gradient(transparent,rgba(0,0,0,.65));pointer-events:none;transition:opacity .35s}
+.player.idle .stage-wrap::after{opacity:0}
 .stage iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0;pointer-events:none}
 .player.zoom .stage iframe{height:auto;aspect-ratio:9/16;top:50%;transform:translateY(-50%)}
 .placeholder{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:8%;color:#F3F4F6;background:linear-gradient(160deg,#2A2E34,#15171A)}
 .placeholder b{font-family:var(--cond);font-weight:700;font-size:4vh;line-height:1}
 .placeholder span{color:#A2A8B0;margin-top:1vh;font-size:2vh}
-.paused-badge{position:absolute;left:0;right:0;bottom:0;padding:2vh;text-align:center;font-weight:700;font-size:3vh;background:rgba(0,0,0,.7);color:#fff}
+.paused-badge{position:absolute;left:0;right:0;top:0;padding:2vh;text-align:center;font-weight:700;font-size:3vh;background:rgba(0,0,0,.7);color:#fff}
 
 .panel{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;background:var(--pbg);color:var(--pink);
   padding:calc(env(safe-area-inset-top,0px) + 4.5vh) 4vw calc(env(safe-area-inset-bottom,0px) + 4vh) 3.5vw;transition:background .3s}
@@ -105,26 +108,26 @@ button{font:inherit;color:inherit;cursor:pointer}
 .cue:empty{display:none}
 .cue small{display:block;color:var(--pmuted);font-size:.72em;font-weight:700;margin-bottom:.6vh}
 .segs{display:flex;gap:.25vw;margin-top:3.5vh}
-.bottom{display:flex;justify-content:flex-end;gap:2vw;margin-top:2.5vh;min-height:max(44px,7vh)}
 .segs i{flex:1;min-width:0;height:.7vh;border-radius:1vh;background:var(--pline)}
 .segs i.past{background:var(--pmuted)}
 .segs i.now{background:var(--pink)}
-.controls{display:flex;gap:1vw;flex:none;transition:opacity .35s}
+.controls{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 4%);transform:translateX(-50%);display:flex;align-items:center;gap:max(10px,1.6vh);z-index:2;white-space:nowrap;transition:opacity .35s}
 .player.idle .controls{opacity:0;pointer-events:none}
-.ctl{min-height:max(44px,7vh);padding:0 max(14px,1.6vw);border-radius:1.6vh;border:.25vh solid var(--pline);background:transparent;color:var(--pink);font-weight:700;font-size:max(15px,2.4vh)}
-.ctl.primary{background:var(--pink);color:var(--pbg);border-color:var(--pink);min-width:max(110px,11vw)}
+.ctl{width:max(48px,8.5vh);height:max(48px,8.5vh);border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;display:grid;place-items:center;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);touch-action:manipulation}
+.ctl svg{width:44%;height:44%;fill:currentColor}
+.ctl.primary{width:auto;border-radius:999px;padding:0 max(20px,3vh);background:var(--gold);color:var(--on-gold);font-weight:800;font-size:max(16px,2.8vh)}
+.is-rest .ctl.primary{background:#fff;color:#15171A}
+.end-btn{background:none;border:.25vh solid var(--pline);color:var(--pink);border-radius:1.2vh;padding:.3em .9em;font-weight:700;font-size:max(13px,2.2vh);margin-left:1.5vw;transition:opacity .35s;touch-action:manipulation}
+.player.idle .end-btn{opacity:0;pointer-events:none}
 
 /* Phone held upright (not casting) */
 @media (max-aspect-ratio: 4/5){
   .player{flex-direction:column}
-  .stage,.player.zoom .stage{height:44%;aspect-ratio:auto;width:100%}
+  .stage-wrap,.player.zoom .stage-wrap{height:46%;aspect-ratio:auto;width:100%}
   .stage iframe,.player.zoom .stage iframe{height:100%;width:auto;aspect-ratio:9/16;left:50%;top:0;transform:translateX(-50%)}
   .panel{padding:2.5vh 5vw}
   .name{font-size:5vh}.big{font-size:14vh}.is-rest .big{font-size:18vh}.chip{font-size:2.2vh}.count-side{font-size:2.2vh}
-  .bottom{flex-direction:column;align-items:stretch;gap:2vh}
-  .controls{justify-content:stretch}
-  .controls .ctl{flex:1}
-  .player.idle .controls{opacity:1;pointer-events:auto}
 }
 @media (max-width: 820px){
   .home{grid-template-columns:1fr}
@@ -170,23 +173,22 @@ button{font:inherit;color:inherit;cursor:pointer}
 </main>
 
 <div class="player" id="player" hidden>
-  <div class="stage" id="stage"></div>
+  <div class="stage-wrap">
+    <div class="stage" id="stage"></div>
+    <div class="controls" id="controls">
+      <button class="ctl" id="backBtn" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.5v14H6zM10 12l9-7v14z"/></svg></button>
+      <button class="ctl" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg></button>
+      <button class="ctl primary" id="nextBtn">Done</button>
+    </div>
+  </div>
   <div class="panel">
-    <div class="topline"><span id="p-pos"></span><span class="left-time" id="p-left"></span></div>
+    <div class="topline"><span id="p-pos"></span><span><span class="left-time" id="p-left"></span><button class="end-btn" id="endBtn">End</button></span></div>
     <h2 class="name" id="p-name"></h2>
     <div class="chips" id="p-chips"></div>
     <div class="count"><div class="big" id="p-big"></div><div class="count-side" id="p-side"></div></div>
     <div class="bar"><i id="p-bar"></i></div>
     <p class="cue" id="p-cue"></p>
     <div class="segs" id="segs" aria-hidden="true"></div>
-    <div class="bottom">
-    <div class="controls" id="controls">
-      <button class="ctl" id="endBtn">End</button>
-      <button class="ctl" id="backBtn">Back</button>
-      <button class="ctl" id="pauseBtn">Pause</button>
-      <button class="ctl primary" id="nextBtn">Done</button>
-    </div>
-    </div>
   </div>
 </div>
 
@@ -238,6 +240,10 @@ const WORKOUT = {
   ]
 };
 const READY_SECONDS = 6;      // short "get ready" gap between moves in a circuit
+const START_SECONDS = 10;     // countdown after tapping Start workout
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg>';
+const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>';
+//      // short "get ready" gap between moves in a circuit
 const MANUAL_ESTIMATE = 40;   // seconds assumed for tap-to-finish moves when estimating time
 
 /* ---------------- Settings ---------------- */
@@ -285,14 +291,17 @@ function buildSteps(){
     if (typeof w.after === "number" && w.after > 0) steps.push({ kind: "rest", dur: w.after, next });
     else steps.push({ kind: "ready", dur: READY_SECONDS, next });
   });
+  if (work.length) steps.unshift({ kind: "ready", dur: START_SECONDS, next: work[0], start: true });
   return steps;
 }
 let steps = buildSteps();
 
+// Seconds per rep. Set `repSec` on an exercise to match its video exactly.
+function repSec(s){ return s.repSec || settings.tempo; }
 function stepDur(s){
   if (s.kind !== "work") return s.dur;
   if (s.mode === "time") return s.time;
-  if (s.mode === "reps" && settings.autoCount) return s.repMax * (s.perSide ? 2 : 1) * settings.tempo;
+  if (s.mode === "reps" && settings.autoCount) return s.repMax * (s.perSide ? 2 : 1) * repSec(s);
   return Infinity;
 }
 const estDur = s => { const d = stepDur(s); return isFinite(d) ? d : MANUAL_ESTIMATE; };
@@ -350,13 +359,44 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 
 /* ---------------- Video ---------------- */
 let currentVideoKey = null;
+let ytReady = false, ytPlayer = null, ytPlayerReady = false, ytFailed = false;
+window.onYouTubeIframeAPIReady = () => { ytReady = true; };
+(function loadYT(){
+  const sc = document.createElement("script");
+  sc.src = "https://www.youtube.com/iframe_api";
+  document.head.append(sc);
+})();
 function setVideo(ex){
   const key = ex.video ? "yt:" + ex.video : "ph:" + ex.name;
   if (key === currentVideoKey) return;
   currentVideoKey = key;
+  try { ytPlayer && ytPlayer.destroy && ytPlayer.destroy(); } catch (e) {}
+  ytPlayer = null; ytPlayerReady = false; ytFailed = false;
   const stage = $("stage");
   stage.innerHTML = "";
-  if (ex.video){
+  if (ex.video && ytReady){
+    const host = document.createElement("div");
+    stage.append(host);
+    const id = ex.video;
+    const player = new YT.Player(host, {
+      host: "https://www.youtube-nocookie.com",
+      videoId: id,
+      playerVars: { autoplay: 1, mute: 1, loop: 1, playlist: id, controls: 0, playsinline: 1, rel: 0, modestbranding: 1, iv_load_policy: 3, disablekb: 1, fs: 0 },
+      events: {
+        onReady: e => {
+          if (player !== ytPlayer) return;
+          ytPlayerReady = true;
+          try {
+            e.target.mute();
+            const f = e.target.getIframe(); f.title = `${ex.name} demo video`; f.tabIndex = -1;
+            if (paused) e.target.pauseVideo(); else e.target.playVideo();
+          } catch (err) {}
+        },
+        onError: () => { if (player === ytPlayer) ytFailed = true; }
+      }
+    });
+    ytPlayer = player;
+  } else if (ex.video){
     const f = document.createElement("iframe");
     const id = encodeURIComponent(ex.video);
     f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3`;
@@ -373,6 +413,20 @@ function setVideo(ex){
   }
   if (paused) showPausedBadge(true);
 }
+// True when the demo video is actually playing (or there's no controllable video).
+function videoPlaying(){
+  if (!ytPlayer || ytFailed) return true;
+  if (!ytPlayerReady) return false;
+  try { const st = ytPlayer.getPlayerState(); return st === 1 || st === 0; } catch (e) { return true; }
+}
+function restartVideo(){
+  if (!ytPlayer || !ytPlayerReady || ytFailed) return;
+  try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch (e) {}
+}
+function pauseVideo(on){
+  if (!ytPlayer || !ytPlayerReady) return;
+  try { on ? ytPlayer.pauseVideo() : ytPlayer.playVideo(); } catch (e) {}
+}
 function showPausedBadge(on){
   let b = $("stage").querySelector(".paused-badge");
   if (on && !b){ b = document.createElement("div"); b.className = "paused-badge"; b.textContent = "Paused"; $("stage").append(b); }
@@ -380,7 +434,7 @@ function showPausedBadge(on){
 }
 
 /* ---------------- Player engine ---------------- */
-let idx = 0, t = 0, paused = false, lastTick = 0, timer = null, lastBeep = null, lastRep = 0, startTime = 0, sideAnnounced = false;
+let stall = 0, idx = 0, t = 0, paused = false, lastTick = 0, timer = null, lastBeep = null, lastRep = 0, startTime = 0, sideAnnounced = false;
 
 function startWorkout(){
   steps = buildSteps();
@@ -401,9 +455,10 @@ function startWorkout(){
 
 function enterStep(){
   const s = steps[idx];
-  t = 0; lastBeep = null; lastRep = 0; sideAnnounced = false;
+  t = 0; stall = 0; lastBeep = null; lastRep = 0; sideAnnounced = false;
   $("player").classList.toggle("is-rest", s.kind !== "work");
   setVideo(s.kind === "work" ? s : s.next);
+  if (s.kind === "work") restartVideo();   // video and rep count start together
   if (s.kind === "work"){
     beep(988, .28, .3);
     if (s.mode === "manual" || (s.mode === "reps" && !settings.autoCount)) say(`${s.name}. ${s.target}. Tap done when finished.`);
@@ -412,7 +467,7 @@ function enterStep(){
   } else {
     const n = s.next;
     const what = `${n.name}${n.setLabel ? ", " + n.setLabel.toLowerCase() : ""}`;
-    say(s.kind === "rest" ? `Rest ${s.dur} seconds. Next up, ${what}.` : `Next, ${what}.`);
+    say(s.start ? `Get ready. First up, ${what}.` : s.kind === "rest" ? `Rest ${s.dur} seconds. Next up, ${what}.` : `Next, ${what}.`);
   }
   render();
 }
@@ -444,7 +499,9 @@ $("player").addEventListener("pointerdown", wake, true);
 function togglePause(){
   paused = !paused;
   wake();
-  $("pauseBtn").textContent = paused ? "Resume" : "Pause";
+  pauseVideo(paused);
+  $("pauseBtn").innerHTML = paused ? ICON_PLAY : ICON_PAUSE;
+  $("pauseBtn").setAttribute("aria-label", paused ? "Resume" : "Pause");
   showPausedBadge(paused);
   if (paused && "speechSynthesis" in window) speechSynthesis.cancel();
   render();
@@ -454,15 +511,19 @@ function tick(){
   const now = performance.now(), dt = (now - lastTick) / 1000;
   lastTick = now;
   if (paused) return;
+  const s = steps[idx];
+  // Rep counting follows the video: hold the count while the clip loads or buffers.
+  const synced = s.kind === "work" && s.mode === "reps" && settings.autoCount;
+  if (synced && !videoPlaying() && stall < 5){ stall += dt; render(); return; }
   t += dt;
-  const s = steps[idx], d = stepDur(s);
+  const d = stepDur(s);
   if (isFinite(d)){
     const remain = Math.ceil(d - t);
     if ((s.kind !== "work" || s.mode === "time") && remain <= 3 && remain >= 1 && remain !== lastBeep){ beep(660, .12); lastBeep = remain; }
     if (t >= d){ advance(); return; }
   }
   if (s.kind === "work" && s.mode === "reps" && settings.autoCount){
-    const rep = Math.min(Math.floor(t / settings.tempo) + 1, s.repMax * (s.perSide ? 2 : 1));
+    const rep = Math.min(Math.floor(t / repSec(s)) + 1, s.repMax * (s.perSide ? 2 : 1));
     if (rep !== lastRep){
       if (lastRep) beep(520, .06, .15);
       lastRep = rep;
@@ -487,7 +548,7 @@ function render(){
       side.innerHTML = `<b>sec</b><span>${s.note || "hold and breathe"}</span>`;
     } else if (s.mode === "reps" && settings.autoCount){
       const total = s.repMax * (s.perSide ? 2 : 1);
-      const rep = Math.min(Math.floor(t / settings.tempo) + 1, total);
+      const rep = Math.min(Math.floor(t / repSec(s)) + 1, total);
       const shown = s.perSide ? ((rep - 1) % s.repMax) + 1 : rep;
       big.textContent = shown;
       if (shown >= s.repMin) big.classList.add("in-range");
@@ -502,8 +563,8 @@ function render(){
     $("nextBtn").textContent = "Done";
   } else {
     const n = s.next;
-    $("p-pos").textContent = s.kind === "rest" ? "Rest" : "Get ready";
-    $("p-name").textContent = `Next: ${n.name}`;
+    $("p-pos").textContent = s.start ? "Starting in" : s.kind === "rest" ? "Rest" : "Get ready";
+    $("p-name").textContent = `${s.start ? "First up" : "Next"}: ${n.name}`;
     chips.innerHTML = (n.setLabel ? `<span class="chip solid">${n.setLabel}</span>` : "") + `<span class="chip">${n.target}</span>`;
     big.textContent = Math.ceil(Math.max(0, d - t));
     side.innerHTML = `<b>sec</b><span>${s.kind === "rest" ? "Breathe, reset" : "Get in position"}</span>`;
@@ -539,7 +600,7 @@ function endWorkout(){
   try { speechSynthesis.cancel(); } catch (e) {}
   try { wakeLock && wakeLock.release(); } catch (e) {}
   try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {}
-  paused = false; $("pauseBtn").textContent = "Pause";
+  paused = false; $("pauseBtn").innerHTML = ICON_PAUSE; $("pauseBtn").setAttribute("aria-label", "Pause");
   $("player").hidden = true; $("home").hidden = false;
   renderHome();
 }
