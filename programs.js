@@ -76,6 +76,29 @@ const css = `
 .dh-panel ol{margin:0;padding:0 0 0 3.4vh;overflow:auto;min-height:0;font-size:2.3vh;line-height:1.35}
 .dh-panel ol li{padding:.55vh 0;color:#D5D8DC}
 .dh-panel .eq{color:#9EA4AC;font-size:1.9vh;margin:0 0 1.5vh}
+/* Phone held upright: video across the top, routine below, controls docked at the bottom */
+@media (max-aspect-ratio: 4/5){
+  .dh-player{flex-direction:column}
+  .dh-stage{flex:none;width:100%;aspect-ratio:16/9;padding-top:env(safe-area-inset-top,0px);box-sizing:content-box}
+  .dh-stage .dh-v,.dh-player.fit .dh-stage .dh-v{top:env(safe-area-inset-top,0px);bottom:auto;left:0;width:100%;height:auto;aspect-ratio:16/9;transform:none}
+  .dh-tap{top:env(safe-area-inset-top,0px)}
+  .dh-big{width:76px;height:76px;top:env(safe-area-inset-top,0px)}.dh-big svg{width:34px;height:34px;margin-left:5px}
+  .dh-ctl,.dh-ctl.hide{position:fixed;top:auto;opacity:1;pointer-events:auto;background:#15171A;border-top:1px solid #2E3238;gap:10px;
+    padding:12px 12px calc(env(safe-area-inset-bottom,0px) + 14px)}
+  .dh-ctl button{font-size:16px;padding:0 18px;height:56px;justify-content:center}
+  .dh-ctl button.primary{min-width:130px}
+  .dh-ctl svg{width:20px;height:20px}
+  #dhp-fit{display:none}
+  .dh-panel{width:auto;flex:1;padding:16px 20px calc(env(safe-area-inset-bottom,0px) + 100px)}
+  .dh-panel .top{font-size:14px}.dh-panel .top button{font-size:14px;padding:8px 14px}
+  .dh-panel h2{font-size:30px;margin:12px 0 4px}
+  .dh-panel .prog{font-size:14px;margin-bottom:10px}
+  .dh-panel .time{font-size:44px}.dh-panel .time small{font-size:14px}
+  .dh-bar{height:8px;margin:10px 0 14px}
+  .dh-panel .eq{font-size:14px;margin-bottom:8px}
+  .dh-panel ol{font-size:17px;padding-left:24px}
+  .dh-panel ol li{padding:4px 0}
+}
 `;
 document.head.insertAdjacentHTML("beforeend", `<style>${css}</style>`);
 
@@ -93,17 +116,17 @@ const progOf = slug => DH && DH.programs.find(p => p.slug === slug);
 const sessionsOf = p => p.sections.flatMap(s => s.sessions.map(x => Object.assign({ section: s.title }, x)));
 const findSession = (p, id) => sessionsOf(p).find(x => x.id === id);
 
-function lockHTML(){
+function lockHTML(sfx = ""){
   return `<div class="dh-lock"><p>Enter your passphrase to show the Dynamic Hockey programs on this device.</p>
-    <form id="dh-form"><input id="dh-pass" type="password" autocomplete="current-password" placeholder="Passphrase" aria-label="Passphrase"><button>Unlock</button></form>
-    <p class="err" id="dh-err" hidden>That passphrase didn't work.</p></div>`;
+    <form id="dh-form${sfx}"><input id="dh-pass${sfx}" type="password" autocomplete="current-password" placeholder="Passphrase" aria-label="Passphrase"><button>Unlock</button></form>
+    <p class="err" id="dh-err${sfx}" hidden>That passphrase didn't work.</p></div>`;
 }
-function wireLock(after){
-  const f = document.getElementById("dh-form"); if (!f) return;
+function wireLock(after, sfx = ""){
+  const f = document.getElementById("dh-form" + sfx); if (!f) return;
   f.onsubmit = async e => {
     e.preventDefault();
-    const ok = await unlock(document.getElementById("dh-pass").value.trim());
-    if (ok) after(); else document.getElementById("dh-err").hidden = false;
+    const ok = await unlock(document.getElementById("dh-pass" + sfx).value.trim());
+    if (ok) after(); else document.getElementById("dh-err" + sfx).hidden = false;
   };
 }
 function programCards(){
@@ -143,7 +166,7 @@ function renderProgram(p){
     <a class="dh-src" href="${p.url}" target="_blank" rel="noopener">Open on Dynamic Hockey</a></div>`;
   document.querySelectorAll("#dh-body .dh-about").forEach(el => moreText(el, el.dataset.more, 160));
   document.querySelectorAll("#dh-body [data-s]").forEach(c => c.onclick = () => go(`#dh/${p.slug}/${c.dataset.s}`));
-  document.getElementById("dh-back").onclick = () => go("");
+  document.getElementById("dh-back").onclick = () => go("#library");
 }
 function renderSession(p, x){
   document.getElementById("dh-bar").textContent = "";
@@ -162,11 +185,11 @@ function renderSession(p, x){
       <ol class="dh-routine">${x.routine.map(r => `<li>${esc(r)}</li>`).join("")}</ol>
       <a class="dh-src" href="${x.url}" target="_blank" rel="noopener">Open on Dynamic Hockey</a>
     </div>`;
-  document.getElementById("dh-check").onclick = e => { const on = !dhDone(x.id); ls.set(DH_DONE + x.id, on ? "1" : "0"); e.currentTarget.classList.toggle("on", on); };
+  document.getElementById("dh-check").onclick = e => { const on = !dhDone(x.id); ls.set(DH_DONE + x.id, on ? "1" : "0"); e.currentTarget.classList.toggle("on", on); if (window.jb23OnDh) window.jb23OnDh(x.id, on); };
   const start = () => { fromSession = true; go(`#dh/${p.slug}/${x.id}/play`); };
   document.getElementById("dh-hero-play").onclick = start;
   const fab = document.getElementById("dh-start"); fab.hidden = false; fab.onclick = start;
-  document.getElementById("dh-back").onclick = () => go("#dh/" + p.slug);
+  document.getElementById("dh-back").onclick = () => go((window.jb23Back && window.jb23Back("dh", x.id)) || "#dh/" + p.slug);
 }
 
 /* ---------- TV player (Wistia) ---------- */
@@ -233,24 +256,32 @@ function openPlayer(p, x){
   window._wq.push({ id: x.wistia, onReady: v => {
     video = v;
     v.bind("play", sync); v.bind("pause", sync);
-    v.bind("end", () => { ls.set(DH_DONE + x.id, "1"); sync(); $p("dhp-ctl").classList.remove("hide"); });
+    v.bind("end", () => { ls.set(DH_DONE + x.id, "1"); if (window.jb23OnDh) window.jb23OnDh(x.id, true); sync(); $p("dhp-ctl").classList.remove("hide"); });
     if (pending) v.play();
     tick = setInterval(sync, 500); sync();
   }});
   try { if (document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); } catch(e){}
 }
 
+/* ---------- shared with the Today screen ---------- */
+window.jb23DH = {
+  get data(){ return DH; },
+  thumbURL, mins, shortTitle,
+  lockHTML: sfx => lockHTML("-" + sfx),
+  wireLock: after => wireLock(after, "-dash")
+};
+
 /* ---------- routing (#dh/<program>[/<session>[/play]]) ---------- */
 function dhRoute(){
   const m = location.hash.match(/^#dh\/([\w-]+)(?:\/(\d+))?(\/play)?$/);
   const v = document.getElementById("v-dh");
   if (!m) { v.hidden = true; document.getElementById("dh-start").hidden = true; closePlayer(); return; }
-  ["v-list","v-week","v-workout","v-exercise"].forEach(id => document.getElementById(id).hidden = true);
+  ["v-dash","v-list","v-week","v-workout","v-exercise"].forEach(id => document.getElementById(id).hidden = true);
   v.hidden = false;
   if (!DH) {
     document.getElementById("dh-bar").textContent = "Dynamic Hockey";
     document.getElementById("dh-body").innerHTML = `<div class="sheet-card">${lockHTML()}</div>`;
-    document.getElementById("dh-back").onclick = () => go("");
+    document.getElementById("dh-back").onclick = () => go("#library");
     wireLock(dhRoute); return;
   }
   const p = progOf(m[1]); if (!p) return go("");
@@ -269,5 +300,6 @@ window.addEventListener("hashchange", dhRoute);
   if (saved && !(await unlock(saved))) ls.del(DH_KEY);
   if (location.hash.startsWith("#dh/")) dhRoute();
   else if (!document.getElementById("v-list").hidden) renderList();
+  else if (!document.getElementById("v-dash").hidden && window.renderDash) window.renderDash();
 })();
 })();
